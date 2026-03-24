@@ -2634,16 +2634,25 @@ window.startStripeCheckout = async function() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection…'; }
 
   try {
-    // Récupérer le token de session Supabase
-    const { data: { session } } = await supabase_client.auth.getSession();
-    if (!session) throw new Error('Session expirée, reconnectez-vous');
+    // Forcer le refresh de la session
+    let token = SUPABASE_ANON_KEY;
+    if (USE_SUPABASE) {
+      const { data: refreshData } = await supabase_client.auth.refreshSession();
+      if (refreshData?.session?.access_token) {
+        token = refreshData.session.access_token;
+      } else {
+        // Fallback : essayer getSession
+        const { data: { session } } = await supabase_client.auth.getSession();
+        if (session?.access_token) token = session.access_token;
+      }
+    }
 
     // Appeler la Edge Function stripe-checkout
     const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/stripe-checkout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
