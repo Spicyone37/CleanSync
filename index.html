@@ -1598,7 +1598,7 @@
     </div>
     <div class="modal-foot" style="justify-content:center">
       <button class="btn btn-g" onclick="closeOverlay('ov-upgrade')">Plus tard</button>
-      <button class="btn btn-up btn-lg" onclick="closeOverlay('ov-upgrade');toast('Contactez-nous pour activer Premium 🚀','info')">Contacter pour activer →</button>
+      <button class="btn btn-up btn-lg" onclick="startStripeCheckout()">💳 Passer Premium 9€/mois →</button>
     </div>
   </div>
 </div>
@@ -1615,8 +1615,10 @@
 // Remplacez ces valeurs par celles de votre projet Supabase :
 // Dashboard Supabase > Settings > API
 // ============================================================
-const SUPABASE_URL      = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
+const SUPABASE_URL           = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
+const SUPABASE_ANON_KEY      = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
+const STRIPE_PUBLIC_KEY      = 'pk_test_51Iv767KNdoru5E88dFs7qDOMgOWlH7kbWPYJdIm3mESdEwK3qMbJtVjZPYcpxk7RRQONWQHC1j7KiYpwnCshsuOs009ioKkAYt';
+const SUPABASE_FUNCTIONS_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co/functions/v1';
 
 // ============================================================
 // DATA LAYER — abstraction Supabase / localStorage
@@ -2623,8 +2625,68 @@ window.saveSettings = async function() {
 };
 
 // ============================================================
-// RENDER ALL
+// STRIPE CHECKOUT
 // ============================================================
+window.startStripeCheckout = async function() {
+  if (!S.user) { toast('Connectez-vous d\'abord', 'error'); return; }
+
+  const btn = document.querySelector('#ov-upgrade .btn-up');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection…'; }
+
+  try {
+    // Récupérer le token de session Supabase
+    const { data: { session } } = await supabase_client.auth.getSession();
+    if (!session) throw new Error('Session expirée, reconnectez-vous');
+
+    // Appeler la Edge Function stripe-checkout
+    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/stripe-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur Stripe');
+
+    // Rediriger vers Stripe Checkout
+    window.location.href = data.url;
+
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💳 Passer Premium 9€/mois →'; }
+  }
+};
+
+// Détecter le retour depuis Stripe
+function checkStripeReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('premium') === 'success') {
+    // Nettoyer l'URL
+    window.history.replaceState({}, '', window.location.pathname);
+    // Recharger le profil depuis Supabase
+    setTimeout(async () => {
+      if (S.user && USE_SUPABASE) {
+        const { data: prof } = await supabase_client.from('profiles').select('plan').eq('id', S.user.id).single();
+        if (prof?.plan === 'premium') {
+          S.user.plan = 'premium';
+          setSess(S.user);
+          document.getElementById('user-plan-display').textContent = '⭐ Premium';
+          document.getElementById('user-plan-display').className = 'user-plan premium';
+          document.getElementById('nav-lock-rapports').style.display = 'none';
+          document.getElementById('nav-lock-sms').style.display = 'none';
+          toast('🎉 Bienvenue en Premium ! SMS automatiques activés.', 'success');
+        }
+      }
+    }, 2000);
+  } else if (params.get('premium') === 'cancelled') {
+    window.history.replaceState({}, '', window.location.pathname);
+    toast('Paiement annulé', 'info');
+  }
+}
+
+
 function renderAll() {
   renderDashboard();
   renderResas();
@@ -2638,6 +2700,7 @@ function renderAll() {
 // INIT — restore session
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
+  checkStripeReturn();
   if (USE_SUPABASE) {
     // Check Supabase session
     const { data: { session } } = await supabase_client.auth.getSession();
