@@ -2,9 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CleanSync</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
@@ -22,7 +21,6 @@
       min-height: 100vh;
     }
 
-    /* Auth Screen */
     .auth-container {
       min-height: 100vh;
       display: flex;
@@ -102,12 +100,6 @@
       box-shadow: 0 4px 12px rgba(240, 192, 64, 0.3);
     }
 
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid #2c2f42;
-      color: #8b8fa8;
-    }
-
     .tabs {
       display: flex;
       gap: 8px;
@@ -145,7 +137,17 @@
       display: none;
     }
 
-    /* App Layout */
+    .success-message {
+      background: rgba(62, 207, 142, 0.1);
+      border: 1px solid rgba(62, 207, 142, 0.25);
+      border-radius: 8px;
+      padding: 12px;
+      color: #3ecf8e;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+    }
+
     .app-container {
       display: none;
       min-height: 100vh;
@@ -255,11 +257,6 @@
         transition: transform 0.3s;
         z-index: 1000;
       }
-      
-      .sidebar.open {
-        transform: translateX(0);
-      }
-      
       .main-content {
         margin-left: 0;
         padding: 16px;
@@ -325,11 +322,6 @@
       font-size: 14px;
       margin-bottom: 12px;
     }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
   </style>
 </head>
 <body>
@@ -343,8 +335,8 @@
     </div>
 
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('login')">Connexion</button>
-      <button class="tab" onclick="switchTab('register')">Inscription</button>
+      <button class="tab active" id="tabLoginBtn">Connexion</button>
+      <button class="tab" id="tabRegisterBtn">Inscription</button>
     </div>
 
     <div id="loginForm">
@@ -356,7 +348,7 @@
         <label>Mot de passe</label>
         <input type="password" id="loginPassword" placeholder="••••••••">
       </div>
-      <button class="btn btn-primary" onclick="handleLogin()">Se connecter</button>
+      <button class="btn btn-primary" id="loginBtn">Se connecter</button>
     </div>
 
     <div id="registerForm" style="display: none;">
@@ -372,10 +364,11 @@
         <label>Confirmer</label>
         <input type="password" id="registerPassword2" placeholder="••••••••">
       </div>
-      <button class="btn btn-primary" onclick="handleRegister()">Créer un compte</button>
+      <button class="btn btn-primary" id="registerBtn">Créer un compte</button>
     </div>
 
     <div id="authError" class="error-message"></div>
+    <div id="authSuccess" class="success-message"></div>
   </div>
 </div>
 
@@ -387,18 +380,17 @@
       <p id="userEmail" style="color: #8b8fa8; font-size: 12px; margin-top: 8px;"></p>
     </div>
     
-    <button class="nav-item active" onclick="navigateTo('dashboard')">📊 Tableau de bord</button>
-    <button class="nav-item" onclick="navigateTo('reservations')">📅 Réservations</button>
-    <button class="nav-item" onclick="navigateTo('logements')">🏠 Logements</button>
-    <button class="nav-item" onclick="navigateTo('societes')">🏢 Sociétés</button>
+    <button class="nav-item active" data-page="dashboard">📊 Tableau de bord</button>
+    <button class="nav-item" data-page="reservations">📅 Réservations</button>
+    <button class="nav-item" data-page="logements">🏠 Logements</button>
+    <button class="nav-item" data-page="societes">🏢 Sociétés</button>
     
     <div style="margin-top: auto; padding-top: 24px;">
-      <button class="btn btn-secondary btn-sm" onclick="handleLogout()" style="width: 100%;">Se déconnecter</button>
+      <button class="btn btn-secondary" id="logoutBtn" style="width: 100%; padding: 10px; background: transparent; border: 1px solid #2c2f42; border-radius: 12px; color: #8b8fa8; cursor: pointer;">Se déconnecter</button>
     </div>
   </div>
 
   <div class="main-content">
-    <!-- Dashboard Page -->
     <div id="dashboardPage" class="page active">
       <div class="header-bar">
         <h1>Tableau de bord</h1>
@@ -410,29 +402,26 @@
       </div>
     </div>
 
-    <!-- Reservations Page -->
     <div id="reservationsPage" class="page">
       <div class="header-bar">
         <h1>Réservations</h1>
-        <button class="btn btn-primary btn-sm" onclick="showReservationModal()">+ Nouvelle réservation</button>
+        <button class="btn btn-primary btn-sm" id="addResaBtn">+ Nouvelle réservation</button>
       </div>
       <div id="reservationsList"></div>
     </div>
 
-    <!-- Logements Page -->
     <div id="logementsPage" class="page">
       <div class="header-bar">
         <h1>Logements</h1>
-        <button class="btn btn-primary btn-sm" onclick="showLogementModal()">+ Nouveau logement</button>
+        <button class="btn btn-primary btn-sm" id="addLogementBtn">+ Nouveau logement</button>
       </div>
       <div id="logementsList"></div>
     </div>
 
-    <!-- Societes Page -->
     <div id="societesPage" class="page">
       <div class="header-bar">
         <h1>Sociétés de ménage</h1>
-        <button class="btn btn-primary btn-sm" onclick="showSocieteModal()">+ Nouvelle société</button>
+        <button class="btn btn-primary btn-sm" id="addSocieteBtn">+ Nouvelle société</button>
       </div>
       <div id="societesList"></div>
     </div>
@@ -446,8 +435,8 @@
     <select id="resaLot"></select>
     <input type="date" id="resaCheckin" placeholder="Date d'arrivée">
     <input type="date" id="resaCheckout" placeholder="Date de départ">
-    <button class="btn btn-primary" onclick="saveReservation()">Enregistrer</button>
-    <button class="btn btn-secondary" onclick="closeModal('reservationModal')">Annuler</button>
+    <button class="btn btn-primary" id="saveResaBtn">Enregistrer</button>
+    <button class="btn btn-secondary" id="closeResaModal">Annuler</button>
   </div>
 </div>
 
@@ -457,8 +446,8 @@
     <input type="text" id="logNom" placeholder="Nom du logement">
     <input type="text" id="logAdresse" placeholder="Adresse">
     <textarea id="logCode" placeholder="Code d'accès (optionnel)" rows="3"></textarea>
-    <button class="btn btn-primary" onclick="saveLogement()">Enregistrer</button>
-    <button class="btn btn-secondary" onclick="closeModal('logementModal')">Annuler</button>
+    <button class="btn btn-primary" id="saveLogementBtn">Enregistrer</button>
+    <button class="btn btn-secondary" id="closeLogementModal">Annuler</button>
   </div>
 </div>
 
@@ -467,43 +456,85 @@
     <h3>Nouvelle société</h3>
     <input type="text" id="socNom" placeholder="Nom de la société">
     <input type="tel" id="socTel" placeholder="Téléphone">
-    <button class="btn btn-primary" onclick="saveSociete()">Enregistrer</button>
-    <button class="btn btn-secondary" onclick="closeModal('societeModal')">Annuler</button>
+    <button class="btn btn-primary" id="saveSocieteBtn">Enregistrer</button>
+    <button class="btn btn-secondary" id="closeSocieteModal">Annuler</button>
   </div>
 </div>
 
 <script>
+console.log('🚀 Application démarrée');
+
 // Configuration Supabase
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
 
 let supabase = null;
 let currentUser = null;
-
-// Données
 let societes = [];
 let logements = [];
 let reservations = [];
 
 // Initialisation
 async function init() {
+  console.log('📦 Initialisation...');
   try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase initialisé');
     
-    // Vérifier session existante
     const { data: { session } } = await supabase.auth.getSession();
+    console.log('Session existante:', session ? 'Oui' : 'Non');
+    
     if (session?.user) {
       currentUser = session.user;
       await loadUserData();
     }
+    
+    // Attacher les événements
+    attachEvents();
+    
   } catch (error) {
-    console.error('Erreur init:', error);
-    showToast('Erreur de connexion à Supabase', 'error');
+    console.error('❌ Erreur init:', error);
+    showError('authError', 'Erreur de connexion: ' + error.message);
   }
 }
 
-// Charger les données utilisateur
+function attachEvents() {
+  console.log('🔗 Attachement des événements...');
+  
+  // Tabs
+  document.getElementById('tabLoginBtn').onclick = () => switchTab('login');
+  document.getElementById('tabRegisterBtn').onclick = () => switchTab('register');
+  
+  // Boutons auth
+  document.getElementById('loginBtn').onclick = handleLogin;
+  document.getElementById('registerBtn').onclick = handleRegister;
+  
+  // Navigation
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.onclick = () => navigateTo(btn.dataset.page);
+  });
+  
+  // Logout
+  document.getElementById('logoutBtn').onclick = handleLogout;
+  
+  // Modals
+  document.getElementById('addResaBtn').onclick = showReservationModal;
+  document.getElementById('addLogementBtn').onclick = showLogementModal;
+  document.getElementById('addSocieteBtn').onclick = showSocieteModal;
+  
+  document.getElementById('saveResaBtn').onclick = saveReservation;
+  document.getElementById('saveLogementBtn').onclick = saveLogement;
+  document.getElementById('saveSocieteBtn').onclick = saveSociete;
+  
+  document.getElementById('closeResaModal').onclick = () => closeModal('reservationModal');
+  document.getElementById('closeLogementModal').onclick = () => closeModal('logementModal');
+  document.getElementById('closeSocieteModal').onclick = () => closeModal('societeModal');
+  
+  console.log('✅ Événements attachés');
+}
+
 async function loadUserData() {
+  console.log('👤 Chargement des données utilisateur...');
   try {
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('appContainer').classList.add('active');
@@ -511,13 +542,13 @@ async function loadUserData() {
     
     await loadAllData();
     renderAll();
+    console.log('✅ Données chargées');
   } catch (error) {
-    console.error('Erreur chargement:', error);
-    showToast('Erreur de chargement des données', 'error');
+    console.error('❌ Erreur chargement:', error);
+    showToast('Erreur: ' + error.message);
   }
 }
 
-// Charger toutes les données
 async function loadAllData() {
   try {
     const [societesRes, logementsRes, reservationsRes] = await Promise.all([
@@ -534,13 +565,166 @@ async function loadAllData() {
     logements = logementsRes.data || [];
     reservations = reservationsRes.data || [];
     
+    console.log(`📊 Données: ${societes.length} sociétés, ${logements.length} logements, ${reservations.length} réservations`);
+    
   } catch (error) {
     console.error('Erreur chargement données:', error);
-    showToast('Erreur: ' + error.message, 'error');
+    throw error;
   }
 }
 
-// Rendu des pages
+async function handleLogin() {
+  console.log('🔐 Tentative de connexion...');
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  if (!email || !password) {
+    showError('authError', 'Veuillez remplir tous les champs');
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    console.log('✅ Connexion réussie');
+    currentUser = data.user;
+    await loadUserData();
+  } catch (error) {
+    console.error('❌ Erreur login:', error);
+    showError('authError', error.message);
+  }
+}
+
+async function handleRegister() {
+  console.log('📝 Tentative d\'inscription...');
+  const email = document.getElementById('registerEmail').value;
+  const password = document.getElementById('registerPassword').value;
+  const password2 = document.getElementById('registerPassword2').value;
+  
+  if (!email || !password) {
+    showError('authError', 'Veuillez remplir tous les champs');
+    return;
+  }
+  
+  if (password !== password2) {
+    showError('authError', 'Les mots de passe ne correspondent pas');
+    return;
+  }
+  
+  if (password.length < 8) {
+    showError('authError', 'Le mot de passe doit faire au moins 8 caractères');
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    console.log('✅ Inscription réussie');
+    
+    const successDiv = document.getElementById('authSuccess');
+    successDiv.textContent = 'Compte créé ! Vous pouvez maintenant vous connecter';
+    successDiv.style.display = 'block';
+    
+    setTimeout(() => {
+      successDiv.style.display = 'none';
+      switchTab('login');
+      document.getElementById('loginEmail').value = email;
+    }, 2000);
+    
+  } catch (error) {
+    console.error('❌ Erreur inscription:', error);
+    showError('authError', error.message);
+  }
+}
+
+async function handleLogout() {
+  console.log('🚪 Déconnexion...');
+  await supabase.auth.signOut();
+  window.location.reload();
+}
+
+async function saveReservation() {
+  const logementId = document.getElementById('resaLot').value;
+  const checkin = document.getElementById('resaCheckin').value;
+  const checkout = document.getElementById('resaCheckout').value;
+  
+  if (!logementId || !checkin || !checkout) {
+    showToast('Veuillez remplir tous les champs');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from('reservations').insert({
+      user_id: currentUser.id,
+      logement_id: logementId,
+      checkin,
+      checkout
+    });
+    if (error) throw error;
+    
+    await loadAllData();
+    renderAll();
+    closeModal('reservationModal');
+    showToast('Réservation ajoutée');
+  } catch (error) {
+    showToast('Erreur: ' + error.message);
+  }
+}
+
+async function saveLogement() {
+  const nom = document.getElementById('logNom').value;
+  const adresse = document.getElementById('logAdresse').value;
+  const code = document.getElementById('logCode').value;
+  
+  if (!nom) {
+    showToast('Le nom du logement est requis');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from('logements').insert({
+      user_id: currentUser.id,
+      nom,
+      adresse,
+      code
+    });
+    if (error) throw error;
+    
+    await loadAllData();
+    renderAll();
+    closeModal('logementModal');
+    showToast('Logement ajouté');
+  } catch (error) {
+    showToast('Erreur: ' + error.message);
+  }
+}
+
+async function saveSociete() {
+  const nom = document.getElementById('socNom').value;
+  const tel = document.getElementById('socTel').value;
+  
+  if (!nom) {
+    showToast('Le nom de la société est requis');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from('societes').insert({
+      user_id: currentUser.id,
+      nom,
+      tel
+    });
+    if (error) throw error;
+    
+    await loadAllData();
+    renderAll();
+    closeModal('societeModal');
+    showToast('Société ajoutée');
+  } catch (error) {
+    showToast('Erreur: ' + error.message);
+  }
+}
+
 function renderAll() {
   renderDashboard();
   renderReservations();
@@ -575,7 +759,7 @@ function renderDashboard() {
     recentDiv.innerHTML = upcoming.map(r => {
       const log = logements.find(l => l.id === r.logement_id);
       return `<div style="padding: 12px; border-bottom: 1px solid #2c2f42;">
-        <strong>${log?.nom || 'Logement'}</strong><br>
+        <strong>${escapeHtml(log?.nom || 'Logement')}</strong><br>
         Du ${r.checkin} au ${r.checkout}
       </div>`;
     }).join('');
@@ -592,7 +776,7 @@ function renderReservations() {
   container.innerHTML = reservations.map(r => {
     const log = logements.find(l => l.id === r.logement_id);
     return `<div class="card">
-      <strong>${log?.nom || 'Logement'}</strong><br>
+      <strong>${escapeHtml(log?.nom || 'Logement')}</strong><br>
       Du ${r.checkin} au ${r.checkout}
     </div>`;
   }).join('');
@@ -629,146 +813,22 @@ function renderSocietes() {
   `).join('');
 }
 
-// Actions
-async function handleLogin() {
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-  
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    currentUser = data.user;
-    await loadUserData();
-  } catch (error) {
-    showError('authError', error.message);
-  }
-}
-
-async function handleRegister() {
-  const email = document.getElementById('registerEmail').value;
-  const password = document.getElementById('registerPassword').value;
-  const password2 = document.getElementById('registerPassword2').value;
-  
-  if (password !== password2) {
-    showError('authError', 'Les mots de passe ne correspondent pas');
-    return;
-  }
-  if (password.length < 8) {
-    showError('authError', 'Le mot de passe doit faire au moins 8 caractères');
-    return;
-  }
-  
-  try {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    showToast('Compte créé ! Vous pouvez maintenant vous connecter', 'success');
-    switchTab('login');
-    document.getElementById('loginEmail').value = email;
-  } catch (error) {
-    showError('authError', error.message);
-  }
-}
-
-async function handleLogout() {
-  await supabase.auth.signOut();
-  window.location.reload();
-}
-
-async function saveReservation() {
-  const logementId = document.getElementById('resaLot').value;
-  const checkin = document.getElementById('resaCheckin').value;
-  const checkout = document.getElementById('resaCheckout').value;
-  
-  if (!logementId || !checkin || !checkout) {
-    showToast('Veuillez remplir tous les champs', 'error');
-    return;
-  }
-  
-  try {
-    const { error } = await supabase.from('reservations').insert({
-      user_id: currentUser.id,
-      logement_id: logementId,
-      checkin,
-      checkout
-    });
-    if (error) throw error;
-    await loadAllData();
-    renderAll();
-    closeModal('reservationModal');
-    showToast('Réservation ajoutée', 'success');
-  } catch (error) {
-    showToast('Erreur: ' + error.message, 'error');
-  }
-}
-
-async function saveLogement() {
-  const nom = document.getElementById('logNom').value;
-  const adresse = document.getElementById('logAdresse').value;
-  const code = document.getElementById('logCode').value;
-  
-  if (!nom) {
-    showToast('Le nom du logement est requis', 'error');
-    return;
-  }
-  
-  try {
-    const { error } = await supabase.from('logements').insert({
-      user_id: currentUser.id,
-      nom,
-      adresse,
-      code
-    });
-    if (error) throw error;
-    await loadAllData();
-    renderAll();
-    closeModal('logementModal');
-    showToast('Logement ajouté', 'success');
-  } catch (error) {
-    showToast('Erreur: ' + error.message, 'error');
-  }
-}
-
-async function saveSociete() {
-  const nom = document.getElementById('socNom').value;
-  const tel = document.getElementById('socTel').value;
-  
-  if (!nom) {
-    showToast('Le nom de la société est requis', 'error');
-    return;
-  }
-  
-  try {
-    const { error } = await supabase.from('societes').insert({
-      user_id: currentUser.id,
-      nom,
-      tel
-    });
-    if (error) throw error;
-    await loadAllData();
-    renderAll();
-    closeModal('societeModal');
-    showToast('Société ajoutée', 'success');
-  } catch (error) {
-    showToast('Erreur: ' + error.message, 'error');
-  }
-}
-
-// UI Helpers
 function switchTab(tab) {
   const loginForm = document.getElementById('loginForm');
   const registerForm = document.getElementById('registerForm');
-  const tabs = document.querySelectorAll('.tab');
+  const tabLogin = document.getElementById('tabLoginBtn');
+  const tabRegister = document.getElementById('tabRegisterBtn');
   
   if (tab === 'login') {
     loginForm.style.display = 'block';
     registerForm.style.display = 'none';
-    tabs[0].classList.add('active');
-    tabs[1].classList.remove('active');
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
   } else {
     loginForm.style.display = 'none';
     registerForm.style.display = 'block';
-    tabs[0].classList.remove('active');
-    tabs[1].classList.add('active');
+    tabLogin.classList.remove('active');
+    tabRegister.classList.add('active');
   }
 }
 
@@ -778,18 +838,12 @@ function navigateTo(page) {
   
   document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
   event.target.classList.add('active');
-  
-  if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('open');
-  }
 }
 
 function showReservationModal() {
   const select = document.getElementById('resaLot');
   select.innerHTML = '<option value="">Sélectionner un logement</option>' +
     logements.map(l => `<option value="${l.id}">${escapeHtml(l.nom)}</option>`).join('');
-  document.getElementById('resaCheckin').value = '';
-  document.getElementById('resaCheckout').value = '';
   document.getElementById('reservationModal').classList.add('active');
 }
 
@@ -819,10 +873,10 @@ function showError(elementId, message) {
   }, 5000);
 }
 
-function showToast(message, type = 'info') {
+function showToast(message) {
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.innerHTML = `${type === 'error' ? '❌' : '✅'} ${message}`;
+  toast.innerHTML = `✅ ${message}`;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
@@ -837,14 +891,7 @@ function escapeHtml(str) {
   });
 }
 
-// Toggle sidebar on mobile
-document.querySelector('.main-content').addEventListener('click', () => {
-  if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('open');
-  }
-});
-
-// Démarrer
+// Démarrer l'application
 init();
 </script>
 </body>
