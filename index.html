@@ -3,678 +3,476 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="CleanSync">
-  <meta name="application-name" content="CleanSync">
-  <meta name="theme-color" content="#0c0d12">
-  <meta name="description" content="Gestion ménage Airbnb & Booking">
   <title>CleanSync</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  
   <style>
-    /* =====================================================
-       DESIGN SYSTEM - Version optimisée
-       ===================================================== */
-    :root {
-      --ink: #0c0d12;
-      --ink-2: #131520;
-      --ink-3: #1b1d28;
-      --ink-4: #242636;
-      --line: #2c2f42;
-      --line-2: #383b52;
-      --fog: #565a7a;
-      --mist: #8b8fa8;
-      --pale: #c8cbdc;
-      --snow: #eceef5;
-      --gold: #f0c040;
-      --gold-2: #c99020;
-      --gold-glow: rgba(240,192,64,.15);
-      --gold-dim: rgba(240,192,64,.08);
-      --jade: #3ecf8e;
-      --jade-dim: rgba(62,207,142,.1);
-      --coral: #f06060;
-      --coral-dim: rgba(240,96,96,.1);
-      --sky: #60a8f0;
-      --sky-dim: rgba(96,168,240,.1);
-      --r: 12px;
-      --r-sm: 8px;
-      --r-lg: 18px;
-      --r-pill: 999px;
-      --f-display: 'Syne', sans-serif;
-      --f-body: 'Instrument Sans', sans-serif;
-      --ease: cubic-bezier(.22,.68,0,1.2);
-      --ease-out: cubic-bezier(0,0,.2,1);
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html {
-      -webkit-tap-highlight-color: transparent;
-      scroll-behavior: smooth;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     body {
-      font-family: var(--f-body);
-      background: var(--ink);
-      color: var(--snow);
+      font-family: 'Inter', sans-serif;
+      background: #0c0d12;
+      color: #eceef5;
       min-height: 100vh;
-      min-height: 100dvh;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
     }
 
     /* Auth Screen */
-    #auth {
-      min-height: 100dvh;
+    .auth-container {
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 20px;
-      padding-bottom: max(24px, env(safe-area-inset-bottom));
-      position: relative;
-      overflow: hidden;
+      padding: 20px;
     }
 
-    #auth::before {
-      content: '';
-      position: absolute;
-      inset: -50%;
-      background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
-      background-size: 48px 48px;
-      opacity: .4;
-      animation: gridDrift 20s linear infinite;
-    }
-
-    @keyframes gridDrift {
-      to { transform: translate(48px, 48px); }
-    }
-
-    .auth-wrap {
-      position: relative;
-      z-index: 1;
+    .auth-card {
+      background: #131520;
+      border: 1px solid #2c2f42;
+      border-radius: 24px;
+      padding: 32px;
       width: 100%;
       max-width: 400px;
     }
 
-    .auth-brand {
+    .auth-title {
       text-align: center;
-      margin-bottom: 36px;
+      margin-bottom: 32px;
     }
 
-    .auth-brand-mark {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .auth-brand-icon {
-      width: 52px;
-      height: 52px;
-      background: linear-gradient(135deg, var(--gold), var(--gold-2));
-      border-radius: var(--r);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      box-shadow: 0 0 0 1px rgba(240,192,64,.3), 0 8px 24px rgba(240,192,64,.2);
-    }
-
-    .auth-brand-name {
-      font-family: var(--f-display);
+    .auth-title h1 {
       font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -.02em;
-      color: var(--snow);
+      background: linear-gradient(135deg, #f0c040, #c99020);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .auth-brand-tagline {
-      font-size: 13px;
-      color: var(--fog);
-      letter-spacing: .04em;
-      text-transform: uppercase;
+    .input-group {
+      margin-bottom: 16px;
     }
 
-    .auth-card {
-      background: var(--ink-2);
-      border: 1px solid var(--line);
-      border-radius: var(--r-lg);
-      padding: 32px 28px;
-      box-shadow: 0 32px 64px rgba(0,0,0,.5);
-    }
-
-    .auth-tabs {
-      display: flex;
-      gap: 0;
-      background: var(--ink-3);
-      border-radius: var(--r-sm);
-      padding: 3px;
-      margin-bottom: 28px;
-    }
-
-    .auth-tab {
-      flex: 1;
-      padding: 9px 12px;
-      border: none;
-      background: transparent;
-      color: var(--fog);
-      font-family: var(--f-display);
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: .02em;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all .2s;
-    }
-
-    .auth-tab.on {
-      background: var(--ink-4);
-      color: var(--snow);
-      box-shadow: 0 1px 4px rgba(0,0,0,.4);
-    }
-
-    .auth-field { margin-bottom: 16px; }
-    
-    .auth-field label {
+    .input-group label {
       display: block;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
-      color: var(--fog);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-bottom: 7px;
-    }
-
-    .auth-field input {
-      width: 100%;
-      background: var(--ink-3);
-      border: 1px solid var(--line);
-      border-radius: var(--r-sm);
-      padding: 13px 16px;
-      color: var(--snow);
-      font-family: var(--f-body);
-      font-size: 16px;
-      transition: border-color .15s, box-shadow .15s;
-    }
-
-    .auth-field input:focus {
-      outline: none;
-      border-color: var(--gold);
-      box-shadow: 0 0 0 3px var(--gold-dim);
-    }
-
-    .auth-submit {
-      width: 100%;
-      margin-top: 8px;
-      padding: 15px;
-      background: var(--gold);
-      color: var(--ink);
-      border: none;
-      border-radius: var(--r-sm);
-      font-family: var(--f-display);
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: .02em;
-      cursor: pointer;
-      transition: all .2s;
-    }
-
-    .auth-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-
-    .auth-err {
-      background: var(--coral-dim);
-      border: 1px solid rgba(240,96,96,.25);
-      border-radius: var(--r-sm);
-      padding: 11px 14px;
-      color: var(--coral);
-      font-size: 13px;
-      margin-top: 14px;
-    }
-
-    /* App Shell */
-    #app { display: none; min-height: 100dvh; }
-    #app.on { display: flex; flex-direction: column; }
-
-    .shell {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 240px 1fr;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      background: var(--ink-2);
-      border-right: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      padding: 20px 10px 20px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .sidebar-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 4px 10px 20px;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 14px;
-    }
-
-    .sidebar-logo-icon {
-      width: 34px;
-      height: 34px;
-      background: linear-gradient(135deg, var(--gold), var(--gold-2));
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 17px;
-    }
-
-    .nav-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding: 10px 12px;
-      border: none;
-      background: transparent;
-      color: var(--mist);
-      font-family: var(--f-body);
-      font-size: 13.5px;
-      font-weight: 500;
-      border-radius: var(--r-sm);
-      cursor: pointer;
-      transition: all .15s;
-      text-align: left;
-    }
-
-    .nav-btn:hover { background: var(--ink-3); color: var(--snow); }
-    .nav-btn.on { background: var(--gold-dim); color: var(--gold); }
-
-    .sidebar-bottom {
-      margin-top: auto;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
-    }
-
-    .user-pill {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--ink-3);
-      border-radius: var(--r-sm);
-      margin-bottom: 8px;
-    }
-
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--gold-dim), var(--jade-dim));
-      border: 1px solid var(--line-2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-
-    .user-email {
-      font-size: 12px;
-      color: var(--mist);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .upgrade-cta, .logout-cta {
-      width: 100%;
-      padding: 10px;
-      border-radius: var(--r-sm);
-      font-family: var(--f-display);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all .2s;
+      color: #8b8fa8;
       margin-bottom: 6px;
+      text-transform: uppercase;
     }
 
-    .upgrade-cta {
-      background: linear-gradient(135deg, var(--gold), var(--gold-2));
-      color: var(--ink);
-      border: none;
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #1b1d28;
+      border: 1px solid #2c2f42;
+      border-radius: 12px;
+      color: #eceef5;
+      font-size: 16px;
     }
 
-    .logout-cta {
-      background: transparent;
-      color: var(--fog);
-      border: 1px solid var(--line);
-    }
-
-    /* Main Content */
-    .main { min-height: 100vh; overflow-y: auto; }
-
-    .page {
-      display: none;
-      padding: 36px 32px 60px;
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-    .page.on { display: block; }
-
-    /* Cards */
-    .card {
-      background: var(--ink-2);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      overflow: hidden;
-      margin-bottom: 18px;
-    }
-
-    .card-h {
-      padding: 15px 20px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .input-group input:focus {
+      outline: none;
+      border-color: #f0c040;
     }
 
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 16px;
-      border-radius: var(--r-sm);
-      font-family: var(--f-body);
-      font-size: 13px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      border: none;
-      transition: all .15s;
+      transition: all 0.2s;
     }
 
-    .btn-p { background: var(--gold); color: var(--ink); }
-    .btn-g { background: transparent; color: var(--mist); border: 1px solid var(--line); }
-    .btn-d { background: var(--coral-dim); color: var(--coral); }
+    .btn-primary {
+      background: linear-gradient(135deg, #f0c040, #c99020);
+      color: #0c0d12;
+    }
 
-    /* Toast */
-    .toast-zone {
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(240, 192, 64, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #2c2f42;
+      color: #8b8fa8;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: #1b1d28;
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: #8b8fa8;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: #242636;
+      color: #f0c040;
+    }
+
+    .error-message {
+      background: rgba(240, 96, 96, 0.1);
+      border: 1px solid rgba(240, 96, 96, 0.25);
+      border-radius: 8px;
+      padding: 12px;
+      color: #f06060;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    /* App Layout */
+    .app-container {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .app-container.active {
+      display: block;
+    }
+
+    .sidebar {
       position: fixed;
-      bottom: 80px;
-      right: 20px;
-      z-index: 2000;
-      pointer-events: none;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 260px;
+      background: #131520;
+      border-right: 1px solid #2c2f42;
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+
+    .main-content {
+      margin-left: 260px;
+      padding: 24px 32px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #8b8fa8;
+      transition: all 0.2s;
+      width: 100%;
+      background: transparent;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background: #1b1d28;
+      color: #eceef5;
+    }
+
+    .nav-item.active {
+      background: rgba(240, 192, 64, 0.1);
+      color: #f0c040;
+    }
+
+    .card {
+      background: #131520;
+      border: 1px solid #2c2f42;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #131520;
+      border: 1px solid #2c2f42;
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: #f0c040;
+      margin-top: 8px;
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 12px;
+      width: auto;
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+        z-index: 1000;
+      }
+      
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
     }
 
     .toast {
-      background: var(--ink-3);
-      border: 1px solid var(--line-2);
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1b1d28;
+      border: 1px solid #2c2f42;
       border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 8px;
-      animation: slideIn .3s ease;
+      padding: 12px 20px;
+      animation: slideIn 0.3s ease;
+      z-index: 2000;
     }
 
     @keyframes slideIn {
-      from { opacity: 0; transform: translateX(100%); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .shell { grid-template-columns: 1fr; }
-      .sidebar {
-        position: fixed;
-        left: -260px;
-        top: 0;
-        bottom: 0;
-        width: 260px;
-        z-index: 200;
-        transition: left .28s;
+      from {
+        transform: translateX(100%);
+        opacity: 0;
       }
-      .sidebar.on { left: 0; }
-      .page { padding: 18px 14px 70px; }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
-
-    @media (min-width: 769px) {
-      .sidebar { position: sticky; left: 0; transform: none !important; }
-    }
-
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.8);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .overlay.on { display: flex; }
 
     .modal {
-      background: var(--ink-2);
-      border: 1px solid var(--line-2);
-      border-radius: 20px;
-      padding: 26px;
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #131520;
+      border: 1px solid #2c2f42;
+      border-radius: 24px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    select, input, textarea {
       width: 100%;
-      max-width: 560px;
-      max-height: 92dvh;
-      overflow-y: auto;
+      padding: 12px;
+      background: #1b1d28;
+      border: 1px solid #2c2f42;
+      border-radius: 12px;
+      color: #eceef5;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
 
-<div id="auth">
-  <div class="auth-wrap">
-    <div class="auth-brand">
-      <div class="auth-brand-mark">
-        <div class="auth-brand-icon">🧹</div>
-        <div class="auth-brand-name">CleanSync</div>
-      </div>
-      <div class="auth-brand-tagline">Gestion ménage · Airbnb & Booking</div>
+<!-- Auth Screen -->
+<div id="authScreen" class="auth-container">
+  <div class="auth-card">
+    <div class="auth-title">
+      <h1>🧹 CleanSync</h1>
+      <p style="color: #8b8fa8; margin-top: 8px;">Gestion ménage professionnelle</p>
     </div>
 
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <button class="auth-tab on" onclick="authTab('login')">Connexion</button>
-        <button class="auth-tab" onclick="authTab('register')">Créer un compte</button>
-      </div>
-
-      <div id="auth-login-form">
-        <div class="auth-field">
-          <label>Email</label>
-          <input type="email" id="l-email" placeholder="vous@email.com">
-        </div>
-        <div class="auth-field">
-          <label>Mot de passe</label>
-          <input type="password" id="l-pwd" placeholder="••••••••">
-        </div>
-        <button class="auth-submit" onclick="doLogin()">Se connecter →</button>
-        <div id="l-err" style="display:none" class="auth-err"></div>
-      </div>
-
-      <div id="auth-reg-form" style="display:none">
-        <div class="auth-field">
-          <label>Email</label>
-          <input type="email" id="r-email" placeholder="vous@email.com">
-        </div>
-        <div class="auth-field">
-          <label>Mot de passe</label>
-          <input type="password" id="r-pwd" placeholder="8 caractères minimum">
-        </div>
-        <div class="auth-field">
-          <label>Confirmer</label>
-          <input type="password" id="r-pwd2" placeholder="••••••••">
-        </div>
-        <button class="auth-submit" onclick="doRegister()">Créer mon compte →</button>
-        <div id="r-err" style="display:none" class="auth-err"></div>
-      </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Connexion</button>
+      <button class="tab" onclick="switchTab('register')">Inscription</button>
     </div>
+
+    <div id="loginForm">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="vous@exemple.com">
+      </div>
+      <div class="input-group">
+        <label>Mot de passe</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="handleLogin()">Se connecter</button>
+    </div>
+
+    <div id="registerForm" style="display: none;">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="registerEmail" placeholder="vous@exemple.com">
+      </div>
+      <div class="input-group">
+        <label>Mot de passe</label>
+        <input type="password" id="registerPassword" placeholder="Minimum 8 caractères">
+      </div>
+      <div class="input-group">
+        <label>Confirmer</label>
+        <input type="password" id="registerPassword2" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="handleRegister()">Créer un compte</button>
+    </div>
+
+    <div id="authError" class="error-message"></div>
   </div>
 </div>
 
-<div id="app">
-  <div class="shell">
-    <nav class="sidebar" id="sidebar">
-      <div class="sidebar-logo">
-        <div class="sidebar-logo-icon">🧹</div>
-        <div class="sidebar-logo-name">CleanSync</div>
-      </div>
+<!-- App Container -->
+<div id="appContainer" class="app-container">
+  <div class="sidebar" id="sidebar">
+    <div style="margin-bottom: 32px;">
+      <h2 style="color: #f0c040;">🧹 CleanSync</h2>
+      <p id="userEmail" style="color: #8b8fa8; font-size: 12px; margin-top: 8px;"></p>
+    </div>
+    
+    <button class="nav-item active" onclick="navigateTo('dashboard')">📊 Tableau de bord</button>
+    <button class="nav-item" onclick="navigateTo('reservations')">📅 Réservations</button>
+    <button class="nav-item" onclick="navigateTo('logements')">🏠 Logements</button>
+    <button class="nav-item" onclick="navigateTo('societes')">🏢 Sociétés</button>
+    
+    <div style="margin-top: auto; padding-top: 24px;">
+      <button class="btn btn-secondary btn-sm" onclick="handleLogout()" style="width: 100%;">Se déconnecter</button>
+    </div>
+  </div>
 
-      <button class="nav-btn on" data-p="dashboard" onclick="go('dashboard',this)">
-        📊 Tableau de bord
-      </button>
-      <button class="nav-btn" data-p="reservations" onclick="go('reservations',this)">
-        🗂️ Réservations
-      </button>
-      <button class="nav-btn" data-p="logements" onclick="go('logements',this)">
-        🏠 Logements
-      </button>
-      <button class="nav-btn" data-p="societes" onclick="go('societes',this)">
-        🏢 Sociétés
-      </button>
-      <button class="nav-btn" data-p="settings" onclick="go('settings',this)">
-        ⚙️ Configuration
-      </button>
-
-      <div class="sidebar-bottom">
-        <div class="user-pill">
-          <div class="user-avatar" id="user-avatar">👤</div>
-          <div class="user-info">
-            <div class="user-email" id="user-email-display">—</div>
-          </div>
-        </div>
-        <button class="upgrade-cta" onclick="openUpgrade()">⭐ Passer Premium</button>
-        <button class="logout-cta" onclick="doLogout()">→ Déconnexion</button>
+  <div class="main-content">
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page active">
+      <div class="header-bar">
+        <h1>Tableau de bord</h1>
       </div>
-    </nav>
-
-    <main class="main">
-      <div id="page-dashboard" class="page on">
-        <h2 style="margin-bottom:20px">Tableau de bord</h2>
-        <div id="dashboard-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px"></div>
-        <div class="card">
-          <div class="card-h"><strong>Réservations à venir</strong></div>
-          <div id="dashboard-list" style="padding:20px"></div>
-        </div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="card">
+        <h3>📋 Dernières réservations</h3>
+        <div id="recentReservations"></div>
       </div>
+    </div>
 
-      <div id="page-reservations" class="page">
-        <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-          <h2>Réservations</h2>
-          <button class="btn btn-p" onclick="openResaModal()">+ Ajouter</button>
-        </div>
-        <div class="card">
-          <div id="reservations-list" style="padding:20px"></div>
-        </div>
+    <!-- Reservations Page -->
+    <div id="reservationsPage" class="page">
+      <div class="header-bar">
+        <h1>Réservations</h1>
+        <button class="btn btn-primary btn-sm" onclick="showReservationModal()">+ Nouvelle réservation</button>
       </div>
+      <div id="reservationsList"></div>
+    </div>
 
-      <div id="page-logements" class="page">
-        <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-          <h2>Logements</h2>
-          <button class="btn btn-p" onclick="openLogementModal()">+ Ajouter</button>
-        </div>
-        <div id="logements-list"></div>
+    <!-- Logements Page -->
+    <div id="logementsPage" class="page">
+      <div class="header-bar">
+        <h1>Logements</h1>
+        <button class="btn btn-primary btn-sm" onclick="showLogementModal()">+ Nouveau logement</button>
       </div>
+      <div id="logementsList"></div>
+    </div>
 
-      <div id="page-societes" class="page">
-        <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-          <h2>Sociétés de ménage</h2>
-          <button class="btn btn-p" onclick="openSocModal()">+ Ajouter</button>
-        </div>
-        <div id="societes-list"></div>
+    <!-- Societes Page -->
+    <div id="societesPage" class="page">
+      <div class="header-bar">
+        <h1>Sociétés de ménage</h1>
+        <button class="btn btn-primary btn-sm" onclick="showSocieteModal()">+ Nouvelle société</button>
       </div>
-
-      <div id="page-settings" class="page">
-        <h2 style="margin-bottom:20px">Configuration</h2>
-        <div class="card" style="padding:20px">
-          <div style="margin-bottom:20px">
-            <label>Modèle SMS Entrée</label>
-            <textarea id="tpl-in" rows="4" style="width:100%;background:var(--ink-3);color:var(--snow);padding:10px;border-radius:8px;margin-top:8px"></textarea>
-          </div>
-          <div style="margin-bottom:20px">
-            <label>Modèle SMS Sortie</label>
-            <textarea id="tpl-out" rows="4" style="width:100%;background:var(--ink-3);color:var(--snow);padding:10px;border-radius:8px;margin-top:8px"></textarea>
-          </div>
-          <button class="btn btn-p" onclick="saveSettings()">💾 Sauvegarder</button>
-        </div>
-      </div>
-    </main>
+      <div id="societesList"></div>
+    </div>
   </div>
 </div>
-
-<div class="toast-zone" id="tz"></div>
 
 <!-- Modals -->
-<div class="overlay" id="ov-resa"><div class="modal"><h3>Nouvelle réservation</h3>
-  <select id="resa-log" style="width:100%;margin:10px 0;padding:10px"></select>
-  <input type="date" id="resa-checkin" placeholder="Arrivée" style="width:100%;margin:10px 0;padding:10px">
-  <input type="date" id="resa-checkout" placeholder="Départ" style="width:100%;margin:10px 0;padding:10px">
-  <div style="display:flex;gap:10px;margin-top:20px">
-    <button class="btn btn-g" onclick="closeOverlay('ov-resa')">Annuler</button>
-    <button class="btn btn-p" onclick="saveResa()">Enregistrer</button>
+<div id="reservationModal" class="modal">
+  <div class="modal-content">
+    <h3>Nouvelle réservation</h3>
+    <select id="resaLot"></select>
+    <input type="date" id="resaCheckin" placeholder="Date d'arrivée">
+    <input type="date" id="resaCheckout" placeholder="Date de départ">
+    <button class="btn btn-primary" onclick="saveReservation()">Enregistrer</button>
+    <button class="btn btn-secondary" onclick="closeModal('reservationModal')">Annuler</button>
   </div>
-</div></div>
+</div>
 
-<div class="overlay" id="ov-log"><div class="modal"><h3 id="log-title">Nouveau logement</h3>
-  <input type="text" id="log-nom" placeholder="Nom du logement" style="width:100%;margin:10px 0;padding:10px">
-  <input type="text" id="log-adresse" placeholder="Adresse" style="width:100%;margin:10px 0;padding:10px">
-  <textarea id="log-code" placeholder="Code d'accès" rows="2" style="width:100%;margin:10px 0;padding:10px"></textarea>
-  <div style="display:flex;gap:10px;margin-top:20px">
-    <button class="btn btn-g" onclick="closeOverlay('ov-log')">Annuler</button>
-    <button class="btn btn-p" onclick="saveLog()">Enregistrer</button>
+<div id="logementModal" class="modal">
+  <div class="modal-content">
+    <h3>Nouveau logement</h3>
+    <input type="text" id="logNom" placeholder="Nom du logement">
+    <input type="text" id="logAdresse" placeholder="Adresse">
+    <textarea id="logCode" placeholder="Code d'accès (optionnel)" rows="3"></textarea>
+    <button class="btn btn-primary" onclick="saveLogement()">Enregistrer</button>
+    <button class="btn btn-secondary" onclick="closeModal('logementModal')">Annuler</button>
   </div>
-</div></div>
+</div>
 
-<div class="overlay" id="ov-soc"><div class="modal"><h3 id="soc-title">Nouvelle société</h3>
-  <input type="text" id="soc-nom" placeholder="Nom" style="width:100%;margin:10px 0;padding:10px">
-  <input type="tel" id="soc-tel" placeholder="Téléphone" style="width:100%;margin:10px 0;padding:10px">
-  <div style="display:flex;gap:10px;margin-top:20px">
-    <button class="btn btn-g" onclick="closeOverlay('ov-soc')">Annuler</button>
-    <button class="btn btn-p" onclick="saveSoc()">Enregistrer</button>
+<div id="societeModal" class="modal">
+  <div class="modal-content">
+    <h3>Nouvelle société</h3>
+    <input type="text" id="socNom" placeholder="Nom de la société">
+    <input type="tel" id="socTel" placeholder="Téléphone">
+    <button class="btn btn-primary" onclick="saveSociete()">Enregistrer</button>
+    <button class="btn btn-secondary" onclick="closeModal('societeModal')">Annuler</button>
   </div>
-</div></div>
-
-<div class="overlay" id="ov-upgrade"><div class="modal" style="text-align:center">
-  <h3>⭐ Passer Premium</h3>
-  <p style="margin:20px 0">Débloquez les SMS automatiques et rapports mensuels</p>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0">
-    <div style="border:1px solid var(--line);border-radius:12px;padding:16px">
-      <strong>Gratuit</strong>
-      <div style="font-size:24px;margin:8px 0">0€</div>
-      <small>Fonctions de base</small>
-    </div>
-    <div style="border:2px solid var(--gold);border-radius:12px;padding:16px">
-      <strong>Premium</strong>
-      <div style="font-size:24px;margin:8px 0">9€</div>
-      <small>Toutes les fonctionnalités</small>
-    </div>
-  </div>
-  <div style="display:flex;gap:10px;justify-content:center">
-    <button class="btn btn-g" onclick="closeOverlay('ov-upgrade')">Plus tard</button>
-    <button class="btn btn-p" onclick="startPremium()">⭐ Passer Premium</button>
-  </div>
-</div></div>
+</div>
 
 <script>
-'use strict';
-
 // Configuration Supabase
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
@@ -682,132 +480,67 @@ const SUPABASE_ANON_KEY = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
 let supabase = null;
 let currentUser = null;
 
-// Données locales
+// Données
 let societes = [];
 let logements = [];
 let reservations = [];
 
-// Templates SMS par défaut
-const DEFAULT_TEMPLATES = {
-  checkin: "Bonjour {contact},\n\nMénage ENTRÉE pour {logement}\nAdresse: {adresse}\nDate: {date}\nCode accès: {code_acces}",
-  checkout: "Bonjour {contact},\n\nMénage SORTIE pour {logement}\nAdresse: {adresse}\nDate: {date}"
-};
-
-let templates = { ...DEFAULT_TEMPLATES };
-
 // Initialisation
 async function init() {
-  if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+  try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // Vérifier session existante
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      await loadUserData(session.user);
+      currentUser = session.user;
+      await loadUserData();
     }
+  } catch (error) {
+    console.error('Erreur init:', error);
+    showToast('Erreur de connexion à Supabase', 'error');
   }
-  
-  // Charger templates sauvegardés
-  const savedTemplates = localStorage.getItem('cleansync_templates');
-  if (savedTemplates) {
-    templates = JSON.parse(savedTemplates);
-  }
-  document.getElementById('tpl-in').value = templates.checkin;
-  document.getElementById('tpl-out').value = templates.checkout;
 }
 
-// Gestion utilisateur
-async function loadUserData(user) {
-  currentUser = user;
-  document.getElementById('auth').style.display = 'none';
-  document.getElementById('app').classList.add('on');
-  document.getElementById('user-email-display').textContent = user.email;
-  document.getElementById('user-avatar').textContent = user.email.charAt(0).toUpperCase();
-  
-  await loadData();
-  renderAll();
-}
-
-async function doLogin() {
-  const email = document.getElementById('l-email').value;
-  const password = document.getElementById('l-pwd').value;
-  
+// Charger les données utilisateur
+async function loadUserData() {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    await loadUserData(data.user);
-  } catch(e) {
-    showError('l-err', e.message);
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appContainer').classList.add('active');
+    document.getElementById('userEmail').textContent = currentUser.email;
+    
+    await loadAllData();
+    renderAll();
+  } catch (error) {
+    console.error('Erreur chargement:', error);
+    showToast('Erreur de chargement des données', 'error');
   }
 }
 
-async function doRegister() {
-  const email = document.getElementById('r-email').value;
-  const password = document.getElementById('r-pwd').value;
-  const password2 = document.getElementById('r-pwd2').value;
-  
-  if (password !== password2) {
-    showError('r-err', 'Les mots de passe ne correspondent pas');
-    return;
-  }
-  if (password.length < 8) {
-    showError('r-err', 'Le mot de passe doit faire au moins 8 caractères');
-    return;
-  }
-  
+// Charger toutes les données
+async function loadAllData() {
   try {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    toast('Compte créé ! Connectez-vous', 'success');
-    authTab('login');
-  } catch(e) {
-    showError('r-err', e.message);
+    const [societesRes, logementsRes, reservationsRes] = await Promise.all([
+      supabase.from('societes').select('*').eq('user_id', currentUser.id),
+      supabase.from('logements').select('*').eq('user_id', currentUser.id),
+      supabase.from('reservations').select('*').eq('user_id', currentUser.id)
+    ]);
+    
+    if (societesRes.error) throw societesRes.error;
+    if (logementsRes.error) throw logementsRes.error;
+    if (reservationsRes.error) throw reservationsRes.error;
+    
+    societes = societesRes.data || [];
+    logements = logementsRes.data || [];
+    reservations = reservationsRes.data || [];
+    
+  } catch (error) {
+    console.error('Erreur chargement données:', error);
+    showToast('Erreur: ' + error.message, 'error');
   }
 }
 
-async function doLogout() {
-  await supabase.auth.signOut();
-  window.location.reload();
-}
-
-// Chargement des données
-async function loadData() {
-  if (!currentUser) return;
-  
-  const [socRes, logRes, resRes] = await Promise.all([
-    supabase.from('societes').select('*').eq('user_id', currentUser.id),
-    supabase.from('logements').select('*').eq('user_id', currentUser.id),
-    supabase.from('reservations').select('*').eq('user_id', currentUser.id)
-  ]);
-  
-  societes = socRes.data || [];
-  logements = logRes.data || [];
-  reservations = resRes.data || [];
-}
-
-// Sauvegarde
-async function saveSociete(data) {
-  const { error } = await supabase.from('societes').insert({ ...data, user_id: currentUser.id });
-  if (error) throw error;
-  await loadData();
-  renderAll();
-}
-
-async function saveLogement(data) {
-  const { error } = await supabase.from('logements').insert({ ...data, user_id: currentUser.id });
-  if (error) throw error;
-  await loadData();
-  renderAll();
-}
-
-async function saveReservation(data) {
-  const { error } = await supabase.from('reservations').insert({ ...data, user_id: currentUser.id });
-  if (error) throw error;
-  await loadData();
-  renderAll();
-}
-
-// Rendu
+// Rendu des pages
 function renderAll() {
   renderDashboard();
   renderReservations();
@@ -816,194 +549,281 @@ function renderAll() {
 }
 
 function renderDashboard() {
-  const stats = document.getElementById('dashboard-stats');
-  const list = document.getElementById('dashboard-list');
-  
-  stats.innerHTML = `
-    <div class="card" style="padding:20px"><strong>🏠 Logements</strong><br><span style="font-size:32px">${logements.length}</span></div>
-    <div class="card" style="padding:20px"><strong>🏢 Sociétés</strong><br><span style="font-size:32px">${societes.length}</span></div>
-    <div class="card" style="padding:20px"><strong>📅 Réservations</strong><br><span style="font-size:32px">${reservations.length}</span></div>
+  const statsGrid = document.getElementById('statsGrid');
+  statsGrid.innerHTML = `
+    <div class="stat-card">
+      <div>🏠 Logements</div>
+      <div class="stat-value">${logements.length}</div>
+    </div>
+    <div class="stat-card">
+      <div>🏢 Sociétés</div>
+      <div class="stat-value">${societes.length}</div>
+    </div>
+    <div class="stat-card">
+      <div>📅 Réservations</div>
+      <div class="stat-value">${reservations.length}</div>
+    </div>
   `;
   
+  const recentDiv = document.getElementById('recentReservations');
   const today = new Date().toISOString().split('T')[0];
   const upcoming = reservations.filter(r => r.checkout >= today).slice(0, 5);
   
   if (upcoming.length === 0) {
-    list.innerHTML = '<p>Aucune réservation à venir</p>';
+    recentDiv.innerHTML = '<p style="color: #8b8fa8;">Aucune réservation à venir</p>';
   } else {
-    list.innerHTML = upcoming.map(r => {
+    recentDiv.innerHTML = upcoming.map(r => {
       const log = logements.find(l => l.id === r.logement_id);
-      return `<div style="padding:10px;border-bottom:1px solid var(--line)">
-        <strong>${log?.nom || '?'}</strong> - Du ${r.checkin} au ${r.checkout}
+      return `<div style="padding: 12px; border-bottom: 1px solid #2c2f42;">
+        <strong>${log?.nom || 'Logement'}</strong><br>
+        Du ${r.checkin} au ${r.checkout}
       </div>`;
     }).join('');
   }
 }
 
 function renderReservations() {
-  const container = document.getElementById('reservations-list');
+  const container = document.getElementById('reservationsList');
   if (reservations.length === 0) {
-    container.innerHTML = '<p>Aucune réservation</p>';
+    container.innerHTML = '<div class="card"><p style="color: #8b8fa8;">Aucune réservation</p></div>';
     return;
   }
   
   container.innerHTML = reservations.map(r => {
     const log = logements.find(l => l.id === r.logement_id);
-    return `<div style="padding:12px;border-bottom:1px solid var(--line)">
-      <strong>${log?.nom || '?'}</strong> - Du ${r.checkin} au ${r.checkout}
+    return `<div class="card">
+      <strong>${log?.nom || 'Logement'}</strong><br>
+      Du ${r.checkin} au ${r.checkout}
     </div>`;
   }).join('');
 }
 
 function renderLogements() {
-  const container = document.getElementById('logements-list');
+  const container = document.getElementById('logementsList');
   if (logements.length === 0) {
-    container.innerHTML = '<div class="card" style="padding:40px;text-align:center">Aucun logement</div>';
+    container.innerHTML = '<div class="card"><p style="color: #8b8fa8;">Aucun logement</p></div>';
     return;
   }
   
   container.innerHTML = logements.map(l => `
-    <div class="card" style="margin-bottom:12px;padding:16px">
+    <div class="card">
       <strong>${escapeHtml(l.nom)}</strong><br>
-      <small>${escapeHtml(l.adresse)}</small>
+      <small>${escapeHtml(l.adresse || 'Adresse non renseignée')}</small>
       ${l.code ? `<br><small>🔑 ${escapeHtml(l.code)}</small>` : ''}
     </div>
   `).join('');
 }
 
 function renderSocietes() {
-  const container = document.getElementById('societes-list');
+  const container = document.getElementById('societesList');
   if (societes.length === 0) {
-    container.innerHTML = '<div class="card" style="padding:40px;text-align:center">Aucune société</div>';
+    container.innerHTML = '<div class="card"><p style="color: #8b8fa8;">Aucune société</p></div>';
     return;
   }
   
   container.innerHTML = societes.map(s => `
-    <div class="card" style="margin-bottom:12px;padding:16px">
+    <div class="card">
       <strong>${escapeHtml(s.nom)}</strong><br>
-      <small>📞 ${escapeHtml(s.tel)}</small>
+      <small>📞 ${escapeHtml(s.tel || 'Téléphone non renseigné')}</small>
     </div>
   `).join('');
 }
 
-// Modals
-function openResaModal() {
-  const select = document.getElementById('resa-log');
-  select.innerHTML = '<option value="">Sélectionner un logement</option>' + 
+// Actions
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    currentUser = data.user;
+    await loadUserData();
+  } catch (error) {
+    showError('authError', error.message);
+  }
+}
+
+async function handleRegister() {
+  const email = document.getElementById('registerEmail').value;
+  const password = document.getElementById('registerPassword').value;
+  const password2 = document.getElementById('registerPassword2').value;
+  
+  if (password !== password2) {
+    showError('authError', 'Les mots de passe ne correspondent pas');
+    return;
+  }
+  if (password.length < 8) {
+    showError('authError', 'Le mot de passe doit faire au moins 8 caractères');
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    showToast('Compte créé ! Vous pouvez maintenant vous connecter', 'success');
+    switchTab('login');
+    document.getElementById('loginEmail').value = email;
+  } catch (error) {
+    showError('authError', error.message);
+  }
+}
+
+async function handleLogout() {
+  await supabase.auth.signOut();
+  window.location.reload();
+}
+
+async function saveReservation() {
+  const logementId = document.getElementById('resaLot').value;
+  const checkin = document.getElementById('resaCheckin').value;
+  const checkout = document.getElementById('resaCheckout').value;
+  
+  if (!logementId || !checkin || !checkout) {
+    showToast('Veuillez remplir tous les champs', 'error');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from('reservations').insert({
+      user_id: currentUser.id,
+      logement_id: logementId,
+      checkin,
+      checkout
+    });
+    if (error) throw error;
+    await loadAllData();
+    renderAll();
+    closeModal('reservationModal');
+    showToast('Réservation ajoutée', 'success');
+  } catch (error) {
+    showToast('Erreur: ' + error.message, 'error');
+  }
+}
+
+async function saveLogement() {
+  const nom = document.getElementById('logNom').value;
+  const adresse = document.getElementById('logAdresse').value;
+  const code = document.getElementById('logCode').value;
+  
+  if (!nom) {
+    showToast('Le nom du logement est requis', 'error');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from('logements').insert({
+      user_id: currentUser.id,
+      nom,
+      adresse,
+      code
+    });
+    if (error) throw error;
+    await loadAllData();
+    renderAll();
+    closeModal('logementModal');
+    showToast('Logement ajouté', 'success');
+  } catch (error) {
+    showToast('Erreur: ' + error.message, 'error');
+  }
+}
+
+async function saveSociete() {
+  const nom = document.getElementById('socNom').value;
+  const tel = document.getElementById('socTel').value;
+  
+  if (!nom) {
+    showToast('Le nom de la société est requis', 'error');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase.from('societes').insert({
+      user_id: currentUser.id,
+      nom,
+      tel
+    });
+    if (error) throw error;
+    await loadAllData();
+    renderAll();
+    closeModal('societeModal');
+    showToast('Société ajoutée', 'success');
+  } catch (error) {
+    showToast('Erreur: ' + error.message, 'error');
+  }
+}
+
+// UI Helpers
+function switchTab(tab) {
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const tabs = document.querySelectorAll('.tab');
+  
+  if (tab === 'login') {
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
+    tabs[0].classList.add('active');
+    tabs[1].classList.remove('active');
+  } else {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    tabs[0].classList.remove('active');
+    tabs[1].classList.add('active');
+  }
+}
+
+function navigateTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`${page}Page`).classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+
+function showReservationModal() {
+  const select = document.getElementById('resaLot');
+  select.innerHTML = '<option value="">Sélectionner un logement</option>' +
     logements.map(l => `<option value="${l.id}">${escapeHtml(l.nom)}</option>`).join('');
-  openOverlay('ov-resa');
+  document.getElementById('resaCheckin').value = '';
+  document.getElementById('resaCheckout').value = '';
+  document.getElementById('reservationModal').classList.add('active');
 }
 
-function openLogementModal() {
-  document.getElementById('log-nom').value = '';
-  document.getElementById('log-adresse').value = '';
-  document.getElementById('log-code').value = '';
-  openOverlay('ov-log');
+function showLogementModal() {
+  document.getElementById('logNom').value = '';
+  document.getElementById('logAdresse').value = '';
+  document.getElementById('logCode').value = '';
+  document.getElementById('logementModal').classList.add('active');
 }
 
-function openSocModal() {
-  document.getElementById('soc-nom').value = '';
-  document.getElementById('soc-tel').value = '';
-  openOverlay('ov-soc');
+function showSocieteModal() {
+  document.getElementById('socNom').value = '';
+  document.getElementById('socTel').value = '';
+  document.getElementById('societeModal').classList.add('active');
 }
 
-async function saveResa() {
-  const logId = document.getElementById('resa-log').value;
-  const checkin = document.getElementById('resa-checkin').value;
-  const checkout = document.getElementById('resa-checkout').value;
-  
-  if (!logId || !checkin || !checkout) {
-    toast('Veuillez remplir tous les champs', 'error');
-    return;
-  }
-  
-  await saveReservation({ logement_id: logId, checkin, checkout });
-  closeOverlay('ov-resa');
-  toast('Réservation ajoutée', 'success');
-}
-
-async function saveLog() {
-  const nom = document.getElementById('log-nom').value;
-  const adresse = document.getElementById('log-adresse').value;
-  const code = document.getElementById('log-code').value;
-  
-  if (!nom || !adresse) {
-    toast('Nom et adresse requis', 'error');
-    return;
-  }
-  
-  await saveLogement({ nom, adresse, code });
-  closeOverlay('ov-log');
-  toast('Logement ajouté', 'success');
-}
-
-async function saveSoc() {
-  const nom = document.getElementById('soc-nom').value;
-  const tel = document.getElementById('soc-tel').value;
-  
-  if (!nom || !tel) {
-    toast('Nom et téléphone requis', 'error');
-    return;
-  }
-  
-  await saveSociete({ nom, tel });
-  closeOverlay('ov-soc');
-  toast('Société ajoutée', 'success');
-}
-
-function saveSettings() {
-  templates.checkin = document.getElementById('tpl-in').value;
-  templates.checkout = document.getElementById('tpl-out').value;
-  localStorage.setItem('cleansync_templates', JSON.stringify(templates));
-  toast('Configuration sauvegardée', 'success');
-}
-
-function openUpgrade() {
-  openOverlay('ov-upgrade');
-}
-
-function startPremium() {
-  toast('Fonctionnalité Premium - Contactez support@cleansync.com', 'info');
-  closeOverlay('ov-upgrade');
-}
-
-// Utilitaires
-function authTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((btn, i) => {
-    btn.classList.toggle('on', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
-  });
-  document.getElementById('auth-login-form').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('auth-reg-form').style.display = tab === 'register' ? 'block' : 'none';
-}
-
-function go(page, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-  document.getElementById(`page-${page}`).classList.add('on');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
-  if (el) el.classList.add('on');
-}
-
-function openOverlay(id) {
-  document.getElementById(id).classList.add('on');
-}
-
-function closeOverlay(id) {
-  document.getElementById(id).classList.remove('on');
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
 }
 
 function showError(elementId, message) {
-  const el = document.getElementById(elementId);
-  el.textContent = message;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3000);
+  const errorEl = document.getElementById(elementId);
+  errorEl.textContent = message;
+  errorEl.style.display = 'block';
+  setTimeout(() => {
+    errorEl.style.display = 'none';
+  }, 5000);
 }
 
-function toast(message, type = 'info') {
-  const icons = { success: '✅', error: '❌', info: '💡' };
+function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.innerHTML = `${icons[type]} ${message}`;
-  document.getElementById('tz').appendChild(toast);
+  toast.innerHTML = `${type === 'error' ? '❌' : '✅'} ${message}`;
+  document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
 
@@ -1017,11 +837,11 @@ function escapeHtml(str) {
   });
 }
 
-// Fermeture des modals au clic sur le fond
-document.querySelectorAll('.overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.classList.remove('on');
-  });
+// Toggle sidebar on mobile
+document.querySelector('.main-content').addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
 });
 
 // Démarrer
