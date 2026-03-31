@@ -897,7 +897,84 @@
     .premium-lock-desc { font-size: 13px; color: var(--fog); margin-bottom: 20px; line-height: 1.6; }
 
     /* =====================================================
-       SMS MODAL CONTENT
+       STATISTIQUES AVANCÉES
+       ===================================================== */
+    .stat-grid-adv {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .occ-bar-wrap { margin-bottom: 18px; }
+    .occ-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--mist); margin-bottom: 6px; }
+    .occ-bar-track { background: var(--ink-4); border-radius: 99px; height: 8px; overflow: hidden; }
+    .occ-bar-fill  { height: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--jade), var(--sky)); transition: width .6s var(--ease); }
+
+    .rev-table td:last-child { text-align: right; color: var(--jade); font-weight: 700; }
+
+    /* =====================================================
+       MULTILINGUE — sélecteur de langue
+       ===================================================== */
+    .lang-switcher {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .lang-btn {
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--fog);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .lang-btn.on { background: var(--ink-4); color: var(--snow); border-color: var(--line-2); }
+
+    /* =====================================================
+       iCAL AVANCÉE (Webhooks)
+       ===================================================== */
+    .webhook-card {
+      background: var(--ink-2);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .webhook-status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600; padding: 4px 10px;
+      border-radius: var(--r-pill);
+    }
+    .ws-active   { background: var(--jade-dim); color: var(--jade); }
+    .ws-inactive { background: var(--coral-dim); color: var(--coral); }
+    .ws-pending  { background: var(--gold-dim); color: var(--gold); }
+
+    /* =====================================================
+       PWA INSTALL PROMPT
+       ===================================================== */
+    .pwa-banner {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--ink-2);
+      border-top: 1px solid var(--line-2);
+      padding: 14px 20px;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 500;
+      transform: translateY(100%);
+      transition: transform .35s var(--ease);
+    }
+    .pwa-banner.show { transform: none; }
+    .pwa-banner-icon { font-size: 28px; flex-shrink: 0; }
+    .pwa-banner-text { flex: 1; font-size: 13px; color: var(--pale); }
+    .pwa-banner-text strong { color: var(--snow); display: block; margin-bottom: 2px; }
+
+
        ===================================================== */
     .sms-to {
       background: var(--ink-3);
@@ -1224,46 +1301,59 @@
       <div class="nav-group">
         <div class="nav-group-label">Vue d'ensemble</div>
         <button class="nav-btn on" data-p="dashboard" onclick="go('dashboard',this)">
-          <span class="nav-ico">📊</span> Tableau de bord
+          <span class="nav-ico">📊</span> <span class="nav-lbl">Tableau de bord</span>
           <span class="nav-pill" id="nav-pending">0</span>
         </button>
         <button class="nav-btn" data-p="reservations" onclick="go('reservations',this)">
-          <span class="nav-ico">🗂️</span> Réservations
+          <span class="nav-ico">🗂️</span> <span class="nav-lbl">Réservations</span>
         </button>
         <button class="nav-btn" data-p="archives" onclick="go('archives',this)">
-          <span class="nav-ico">📦</span> Archives
+          <span class="nav-ico">📦</span> <span class="nav-lbl">Archives</span>
         </button>
         <button class="nav-btn" data-p="historique" onclick="go('historique',this)">
-          <span class="nav-ico">📨</span> SMS envoyés
+          <span class="nav-ico">📨</span> <span class="nav-lbl">SMS envoyés</span>
         </button>
       </div>
 
       <div class="nav-group">
         <div class="nav-group-label">Gestion</div>
         <button class="nav-btn" data-p="logements" onclick="go('logements',this)">
-          <span class="nav-ico">🏠</span> Logements
+          <span class="nav-ico">🏠</span> <span class="nav-lbl">Logements</span>
         </button>
         <button class="nav-btn" data-p="societes" onclick="go('societes',this)">
-          <span class="nav-ico">🏢</span> Sociétés
+          <span class="nav-ico">🏢</span> <span class="nav-lbl">Sociétés</span>
         </button>
         <button class="nav-btn" data-p="settings" onclick="go('settings',this)">
-          <span class="nav-ico">⚙️</span> Configuration
+          <span class="nav-ico">⚙️</span> <span class="nav-lbl">Configuration</span>
         </button>
       </div>
 
       <div class="nav-group">
         <div class="nav-group-label">Premium</div>
         <button class="nav-btn" data-p="rapports" onclick="go('rapports',this)">
-          <span class="nav-ico">📈</span> Rapports
+          <span class="nav-ico">📈</span> <span class="nav-lbl">Rapports</span>
           <span class="nav-lock" id="nav-lock-rapports">🔒</span>
         </button>
+        <button class="nav-btn" data-p="stats-avancees" onclick="go('stats-avancees',this)">
+          <span class="nav-ico">📊</span> <span class="nav-lbl">Stats avancées</span>
+          <span class="nav-lock" id="nav-lock-stats">🔒</span>
+        </button>
+        <button class="nav-btn" data-p="webhooks" onclick="go('webhooks',this)">
+          <span class="nav-ico">🔗</span> <span class="nav-lbl">iCal Webhooks</span>
+          <span class="nav-lock" id="nav-lock-webhooks">🔒</span>
+        </button>
         <button class="nav-btn" data-p="sms-auto" onclick="go('sms-auto',this)">
-          <span class="nav-ico">🤖</span> SMS Automatique
+          <span class="nav-ico">🤖</span> <span class="nav-lbl">SMS Automatique</span>
           <span class="nav-lock" id="nav-lock-sms">🔒</span>
         </button>
       </div>
 
       <div class="sidebar-bottom">
+        <div class="lang-switcher" style="margin-bottom:10px;justify-content:center">
+          <button class="lang-btn on" onclick="setLang('fr')">🇫🇷 FR</button>
+          <button class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+          <button class="lang-btn" onclick="setLang('es')">🇪🇸 ES</button>
+        </div>
         <div class="user-pill">
           <div class="user-avatar" id="user-avatar">👤</div>
           <div class="user-info">
@@ -1471,10 +1561,38 @@
         </div>
       </div>
 
+      <!-- ---- STATS AVANCÉES (Premium) ---- -->
+      <div id="page-stats-avancees" class="page">
+        <div class="ph">
+          <div><div class="ph-title">Statistiques avancées</div><div class="ph-sub">Occupation, revenus, performance par logement</div></div>
+          <div class="ph-actions">
+            <button class="btn btn-g btn-sm" onclick="renderStatsAvancees()">🔄 Actualiser</button>
+          </div>
+        </div>
+        <div id="stats-av-content"></div>
+      </div>
+
+      <!-- ---- WEBHOOKS iCAL (Premium) ---- -->
+      <div id="page-webhooks" class="page">
+        <div class="ph">
+          <div><div class="ph-title">iCal Webhooks</div><div class="ph-sub">Synchronisation automatique Airbnb & Booking</div></div>
+        </div>
+        <div id="webhooks-content"></div>
+      </div>
+
     </main>
   </div>
 
-  <!-- Bottom nav -->
+  <!-- PWA Install Banner -->
+  <div class="pwa-banner" id="pwa-banner">
+    <div class="pwa-banner-icon">📱</div>
+    <div class="pwa-banner-text">
+      <strong>Installer CleanSync</strong>
+      Accès rapide depuis votre écran d'accueil, fonctionne hors-ligne
+    </div>
+    <button class="btn btn-p btn-sm" onclick="installPWA()">Installer</button>
+    <button class="btn btn-g btn-sm" onclick="dismissPWA()">✕</button>
+  </div>
   <nav class="bot-nav">
     <div class="bot-nav-inner">
       <button class="bot-item on" data-p="dashboard"    onclick="go('dashboard',this)"><span class="bot-ico">📊</span>Accueil</button>
@@ -1590,11 +1708,8 @@
       <div class="plan-card featured">
         <div class="plan-name">⭐ Premium</div>
         <div class="plan-price">9€ <sub>/mois</sub></div>
-        <div class="plan-feats">Tout le gratuit<br>SMS automatique J-1<br>Rapports mensuels<br>Export CSV<br>Support prioritaire</div>
+        <div class="plan-feats">Tout le gratuit<br>SMS automatique J-1<br>Rapports mensuels<br>Stats avancées & occupation<br>iCal Webhooks auto<br>Multilingue EN/ES<br>Export CSV<br>Support prioritaire</div>
       </div>
-    </div>
-    <div class="ib ib-gold" style="text-align:left">
-      <strong>🔧 Mode test :</strong> Tapez <code style="background:var(--ink-3);padding:2px 6px;border-radius:6px">testPremium()</code> dans la console pour activer Premium gratuitement.
     </div>
     <div class="modal-foot" style="justify-content:center">
       <button class="btn btn-g" onclick="closeOverlay('ov-upgrade')">Plus tard</button>
@@ -1615,7 +1730,9 @@
 // ============================================================
 const SUPABASE_URL           = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY      = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
-const STRIPE_PUBLIC_KEY      = 'pk_test_51Iv767KNdoru5E88dFs7qDOMgOWlH7kbWPYJdIm3mESdEwK3qMbJtVjZPYcpxk7RRQONWQHC1j7KiYpwnCshsuOs009ioKkAYt';
+// ⚠️  PRODUCTION : remplacez par votre clé publique LIVE (pk_live_...)
+// Récupérez-la sur https://dashboard.stripe.com/apikeys
+const STRIPE_PUBLIC_KEY      = 'pk_live_51TGlsqBNCQLRdZZvyHRDmJwYKv5Q2Yzg7pWHGk5Dki0mTeJI43CvPPfR3yn4lTfdktjfRDfZunvHbBWUBLxgmYaV007difR4Fl';
 const SUPABASE_FUNCTIONS_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co/functions/v1';
 
 const USE_SUPABASE = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
@@ -1642,7 +1759,7 @@ let S = {
   logements:    [],
   reservations: [],
   smsList:      [],
-  settings:     { proxyUrl: 'https://api.allorigins.win/raw?url=', templateCheckin: DEF_TPL.checkin, templateCheckout: DEF_TPL.checkout }
+  settings:     { proxyUrl: '', templateCheckin: DEF_TPL.checkin, templateCheckout: DEF_TPL.checkout }
 };
 
 let _editSocIdx = -1;
@@ -1806,8 +1923,10 @@ async function boot(user) {
   planEl.className   = 'user-plan ' + (user.plan === 'premium' ? 'premium' : 'free');
 
   const isPrem = user.plan === 'premium';
-  document.getElementById('nav-lock-rapports').style.display = isPrem ? 'none' : '';
-  document.getElementById('nav-lock-sms').style.display      = isPrem ? 'none' : '';
+  document.getElementById('nav-lock-rapports').style.display  = isPrem ? 'none' : '';
+  document.getElementById('nav-lock-sms').style.display       = isPrem ? 'none' : '';
+  document.getElementById('nav-lock-stats').style.display     = isPrem ? 'none' : '';
+  document.getElementById('nav-lock-webhooks').style.display  = isPrem ? 'none' : '';
 
   renderAll();
   toast(`Bonjour ${user.email.split('@')[0]} 👋`, 'success');
@@ -1924,7 +2043,7 @@ window.go = function(page, el) {
 
   closeDrawer();
 
-  const r = { dashboard: renderDashboard, reservations: renderResas, archives: renderArchives, logements: renderLogements, societes: renderSocs, historique: renderSmsHist, rapports: renderRapports, 'sms-auto': renderSmsAuto, settings: renderSettings };
+  const r = { dashboard: renderDashboard, reservations: renderResas, archives: renderArchives, logements: renderLogements, societes: renderSocs, historique: renderSmsHist, rapports: renderRapports, 'sms-auto': renderSmsAuto, settings: renderSettings, 'stats-avancees': renderStatsAvancees, webhooks: renderWebhooks };
   if (r[page]) r[page]();
 };
 
@@ -2118,7 +2237,9 @@ function icalISO(d) { const c=d.replace(/[TZ\s]/g,''); return `${c.slice(0,4)}-$
 
 window.syncLogement = async function(idx) {
   const l = S.logements[idx];
-  const proxy = S.settings.proxyUrl || 'https://api.allorigins.win/raw?url=';
+  // Proxy iCal : utilisez votre Edge Function Supabase en production.
+  // Exemple : https://VOTRE_PROJET.supabase.co/functions/v1/ical-proxy?url=
+  const proxy = S.settings.proxyUrl || '';
   let n = 0;
 
   const fetchIcal = async (url, plat) => {
@@ -2510,6 +2631,272 @@ window.exportCSV = function() {
 };
 
 // ============================================================
+// STATS AVANCÉES (Premium)
+// ============================================================
+window.renderStatsAvancees = function() {
+  const el = document.getElementById('stats-av-content');
+  if (!isPrem()) {
+    el.innerHTML = `
+      <div class="premium-lock">
+        <div class="premium-lock-icon">📊</div>
+        <div class="premium-lock-title">Statistiques avancées</div>
+        <div class="premium-lock-desc">
+          Taux d'occupation par logement, estimation de revenus,<br>
+          performances par plateforme et par société de ménage.
+        </div>
+        <button class="btn btn-up btn-lg" onclick="openOverlay('ov-upgrade')">⭐ Passer Premium</button>
+      </div>`;
+    return;
+  }
+
+  if (!S.reservations.length) {
+    el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--fog)">Aucune donnée — ajoutez des réservations</div>';
+    return;
+  }
+
+  // Calcul taux occupation (30 derniers jours)
+  const today = new Date();
+  const d30   = new Date(today); d30.setDate(d30.getDate() - 30);
+  const d30s  = d30.toISOString().split('T')[0];
+  const tod   = today.toISOString().split('T')[0];
+
+  // Par logement
+  const occByLog = {};
+  S.logements.forEach(l => { occByLog[l.id || l.nom] = { nom: l.nom, nuits: 0 }; });
+
+  let totalNuits = 0, totalResas = 0, revEstime = 0;
+  const byPlat = {};
+
+  S.reservations.forEach(r => {
+    const cin  = r.checkin  >= d30s ? r.checkin  : d30s;
+    const cout = r.checkout <= tod  ? r.checkout : tod;
+    if (cin >= cout) return;
+    const nuits = Math.max(0, Math.round((new Date(cout) - new Date(cin)) / 86400000));
+    totalNuits += nuits;
+    totalResas++;
+
+    const logKey = r.logId || r.logIdx;
+    if (occByLog[logKey]) occByLog[logKey].nuits += nuits;
+
+    const plat = r.platform || 'Autre';
+    byPlat[plat] = (byPlat[plat] || 0) + 1;
+
+    // Estimation revenu si tarif société connu
+    const soc = getSoc(r.socId || r.socIdx);
+    if (soc?.tarif) revEstime += parseFloat(soc.tarif) * nuits * 3; // ~3h/nuit
+  });
+
+  const occGlobal = S.logements.length ? Math.round((totalNuits / (30 * S.logements.length)) * 100) : 0;
+
+  // Render
+  const platHtml = Object.entries(byPlat).map(([p, n]) =>
+    `<tr><td>${esc(p)}</td><td>${n}</td><td>${Math.round(n/totalResas*100)}%</td></tr>`
+  ).join('');
+
+  const occBars = Object.values(occByLog).map(o => {
+    const pct = Math.round((o.nuits / 30) * 100);
+    return `
+    <div class="occ-bar-wrap">
+      <div class="occ-bar-label"><span>${esc(o.nom)}</span><span>${pct}%</span></div>
+      <div class="occ-bar-track"><div class="occ-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="stat-grid-adv" style="margin-bottom:24px">
+      <div class="sc"><div class="sc-label">Taux occupation (30j)</div><div class="sc-val j">${occGlobal}%</div><div class="sc-trend">tous logements</div></div>
+      <div class="sc"><div class="sc-label">Nuits vendues (30j)</div><div class="sc-val g">${totalNuits}</div><div class="sc-trend">nuits</div></div>
+      <div class="sc"><div class="sc-label">Séjours (30j)</div><div class="sc-val s">${totalResas}</div><div class="sc-trend">réservations</div></div>
+      ${revEstime > 0 ? `<div class="sc"><div class="sc-label">Coût ménage estimé</div><div class="sc-val c">${Math.round(revEstime)}€</div><div class="sc-trend">estimation</div></div>` : ''}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px" class="stat-2col">
+      <div class="card">
+        <div class="card-h"><div class="card-h-title">🏠 Occupation par logement (30j)</div></div>
+        <div class="card-body">${occBars || '<p style="color:var(--fog);font-size:13px">Aucune donnée</p>'}</div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div class="card-h-title">📲 Répartition par plateforme</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Plateforme</th><th>Séjours</th><th>%</th></tr></thead>
+            <tbody>${platHtml || '<tr><td class="empty-td" colspan="3">—</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <style>@media(max-width:768px){.stat-2col{grid-template-columns:1fr!important}}</style>
+  `;
+};
+
+// ============================================================
+// iCAL WEBHOOKS / SYNC AUTO (Premium)
+// ============================================================
+window.renderWebhooks = function() {
+  const el = document.getElementById('webhooks-content');
+  if (!isPrem()) {
+    el.innerHTML = `
+      <div class="premium-lock">
+        <div class="premium-lock-icon">🔗</div>
+        <div class="premium-lock-title">Synchronisation iCal avancée</div>
+        <div class="premium-lock-desc">
+          Synchronisez automatiquement vos calendriers Airbnb et Booking.com<br>
+          sans intervention manuelle. Mise à jour toutes les heures via Supabase.<br><br>
+          <em>Nécessite la configuration d'un cron job Supabase (pg_cron).</em>
+        </div>
+        <button class="btn btn-up btn-lg" onclick="openOverlay('ov-upgrade')">⭐ Passer Premium</button>
+      </div>`;
+    return;
+  }
+
+  const rows = S.logements.map((l, i) => {
+    const hasAirbnb  = !!l.icalAirbnb;
+    const hasBooking = !!l.icalBooking;
+    const lastSync   = l.lastSync ? new Date(l.lastSync).toLocaleString('fr-FR') : 'Jamais';
+    return `
+    <div class="webhook-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div>
+          <div style="font-family:var(--f-display);font-size:15px;font-weight:700">${esc(l.nom)}</div>
+          <div style="font-size:12px;color:var(--fog);margin-top:2px">Dernière sync : ${lastSync}</div>
+        </div>
+        <button class="btn btn-j btn-sm" onclick="syncLogement(${i})">🔄 Forcer sync</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <span class="webhook-status ${hasAirbnb ? 'ws-active' : 'ws-inactive'}">
+          ${hasAirbnb ? '✅' : '❌'} Airbnb iCal
+        </span>
+        <span class="webhook-status ${hasBooking ? 'ws-active' : 'ws-inactive'}">
+          ${hasBooking ? '✅' : '❌'} Booking iCal
+        </span>
+        <span class="webhook-status ws-pending">⏱ Cron : toutes les heures</span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="card card-body" style="text-align:center;padding:40px;color:var(--fog)">Ajoutez des logements avec des URLs iCal pour configurer la sync automatique</div>';
+
+  el.innerHTML = `
+    <div class="ib ib-gold" style="margin-bottom:20px">
+      <strong>🔧 Configuration cron Supabase</strong><br>
+      Activez <code style="background:var(--ink-3);padding:2px 6px;border-radius:4px">pg_cron</code> dans votre dashboard Supabase, puis créez un job :<br>
+      <code style="background:var(--ink-3);padding:4px 8px;border-radius:4px;display:inline-block;margin-top:6px;font-size:12px">SELECT cron.schedule('ical-sync','0 * * * *','SELECT net.http_post(...)');</code>
+    </div>
+    <div style="margin-bottom:8px;font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--gold)">
+      📍 État par logement
+    </div>
+    ${rows}
+  `;
+};
+
+// ============================================================
+// MULTILINGUE (i18n)
+// ============================================================
+const LANGS = {
+  fr: {
+    nav_dashboard: 'Tableau de bord', nav_reservations: 'Réservations',
+    nav_archives: 'Archives', nav_sms: 'SMS envoyés', nav_logements: 'Logements',
+    nav_societes: 'Sociétés', nav_settings: 'Configuration', nav_rapports: 'Rapports',
+    nav_stats: 'Stats avancées', nav_webhooks: 'iCal Webhooks', nav_smsauto: 'SMS Automatique',
+    plan_free: '✨ Gratuit', plan_premium: '⭐ Premium',
+    btn_upgrade: '⭐ Passer Premium', btn_logout: '→ Déconnexion',
+    btn_sync: '🔄 Sync iCal', btn_add_resa: '＋ Réservation',
+    page_dashboard_title: 'Tableau de bord', page_rapports_title: 'Rapports mensuels',
+    page_stats_title: 'Statistiques avancées', page_webhooks_title: 'iCal Webhooks',
+  },
+  en: {
+    nav_dashboard: 'Dashboard', nav_reservations: 'Bookings',
+    nav_archives: 'Archives', nav_sms: 'Sent SMS', nav_logements: 'Properties',
+    nav_societes: 'Companies', nav_settings: 'Settings', nav_rapports: 'Reports',
+    nav_stats: 'Advanced stats', nav_webhooks: 'iCal Webhooks', nav_smsauto: 'Auto SMS',
+    plan_free: '✨ Free', plan_premium: '⭐ Premium',
+    btn_upgrade: '⭐ Go Premium', btn_logout: '→ Sign out',
+    btn_sync: '🔄 Sync iCal', btn_add_resa: '＋ Booking',
+    page_dashboard_title: 'Dashboard', page_rapports_title: 'Monthly Reports',
+    page_stats_title: 'Advanced Statistics', page_webhooks_title: 'iCal Webhooks',
+  },
+  es: {
+    nav_dashboard: 'Panel', nav_reservations: 'Reservas',
+    nav_archives: 'Archivo', nav_sms: 'SMS enviados', nav_logements: 'Alojamientos',
+    nav_societes: 'Empresas', nav_settings: 'Configuración', nav_rapports: 'Informes',
+    nav_stats: 'Estadísticas', nav_webhooks: 'iCal Webhooks', nav_smsauto: 'SMS Auto',
+    plan_free: '✨ Gratuito', plan_premium: '⭐ Premium',
+    btn_upgrade: '⭐ Ir a Premium', btn_logout: '→ Cerrar sesión',
+    btn_sync: '🔄 Sync iCal', btn_add_resa: '＋ Reserva',
+    page_dashboard_title: 'Panel de control', page_rapports_title: 'Informes mensuales',
+    page_stats_title: 'Estadísticas avanzadas', page_webhooks_title: 'iCal Webhooks',
+  }
+};
+
+let currentLang = localStorage.getItem('cs_lang') || 'fr';
+
+window.setLang = function(code) {
+  if (!LANGS[code]) return;
+  currentLang = code;
+  localStorage.setItem('cs_lang', code);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('on', b.textContent.includes(code.toUpperCase())));
+
+  const L = LANGS[code];
+  const apply = (sel, key) => { const el = document.querySelector(sel); if (el && L[key]) el.textContent = L[key]; };
+
+  // Nav labels
+  apply('[data-p="dashboard"] .nav-lbl',     'nav_dashboard');
+  apply('[data-p="reservations"] .nav-lbl',  'nav_reservations');
+  apply('[data-p="archives"] .nav-lbl',      'nav_archives');
+  apply('[data-p="historique"] .nav-lbl',    'nav_sms');
+  apply('[data-p="logements"] .nav-lbl',     'nav_logements');
+  apply('[data-p="societes"] .nav-lbl',      'nav_societes');
+  apply('[data-p="settings"] .nav-lbl',      'nav_settings');
+  apply('[data-p="rapports"] .nav-lbl',      'nav_rapports');
+  apply('[data-p="stats-avancees"] .nav-lbl','nav_stats');
+  apply('[data-p="webhooks"] .nav-lbl',      'nav_webhooks');
+  apply('[data-p="sms-auto"] .nav-lbl',      'nav_smsauto');
+
+  // Buttons
+  apply('.upgrade-cta', 'btn_upgrade');
+  apply('.logout-cta',  'btn_logout');
+
+  // User plan label
+  if (S.user) {
+    const planEl = document.getElementById('user-plan-display');
+    if (planEl) planEl.textContent = S.user.plan === 'premium' ? L.plan_premium : L.plan_free;
+  }
+
+  toast(`Langue : ${code.toUpperCase()}`, 'info');
+};
+
+// ============================================================
+// PWA INSTALL PROMPT
+// ============================================================
+let _pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // Only show if not already installed and not dismissed
+  if (!localStorage.getItem('cs_pwa_dismissed')) {
+    setTimeout(() => document.getElementById('pwa-banner')?.classList.add('show'), 3000);
+  }
+});
+
+window.installPWA = async function() {
+  if (!_pwaPrompt) return;
+  _pwaPrompt.prompt();
+  const { outcome } = await _pwaPrompt.userChoice;
+  _pwaPrompt = null;
+  document.getElementById('pwa-banner')?.classList.remove('show');
+  if (outcome === 'accepted') toast('CleanSync installé sur votre écran d\'accueil 🎉', 'success');
+};
+
+window.dismissPWA = function() {
+  document.getElementById('pwa-banner')?.classList.remove('show');
+  localStorage.setItem('cs_pwa_dismissed', '1');
+};
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner')?.classList.remove('show');
+  toast('Application installée ✅', 'success');
+});
+
+// ============================================================
 // SMS AUTOMATIQUE (Premium)
 // ============================================================
 function renderSmsAuto() {
@@ -2643,31 +3030,10 @@ window.startStripeCheckout = async function() {
 };
 
 // ============================================================
-// FONCTION DE TEST PREMIUM (accessible dans la console)
+// FONCTION DE TEST PREMIUM — DÉSACTIVÉE EN PRODUCTION
+// (pour tester en dev : décommenter localement uniquement)
 // ============================================================
-window.testPremium = async function() {
-  if (!S.user) {
-    toast('Connectez-vous d\'abord', 'error');
-    return;
-  }
-  // Mettre à jour localement
-  S.user.plan = 'premium';
-  // Mettre à jour dans Supabase si disponible
-  if (USE_SUPABASE) {
-    try {
-      await supabase_client
-        .from('profiles')
-        .upsert({ id: S.user.id, plan: 'premium' });
-    } catch(e) { console.warn("Erreur mise à jour profile", e); }
-  }
-  // Mettre à jour UI
-  document.getElementById('user-plan-display').textContent = '⭐ Premium';
-  document.getElementById('user-plan-display').className = 'user-plan premium';
-  document.getElementById('nav-lock-rapports').style.display = 'none';
-  document.getElementById('nav-lock-sms').style.display = 'none';
-  toast('🎉 Mode Premium activé (test)', 'success');
-  renderAll();
-};
+// window.testPremium = async function() { ... };
 
 // ============================================================
 // RETOUR STRIPE
@@ -2684,8 +3050,10 @@ function checkStripeReturn() {
           setSess(S.user);
           document.getElementById('user-plan-display').textContent = '⭐ Premium';
           document.getElementById('user-plan-display').className = 'user-plan premium';
-          document.getElementById('nav-lock-rapports').style.display = 'none';
-          document.getElementById('nav-lock-sms').style.display = 'none';
+          document.getElementById('nav-lock-rapports').style.display  = 'none';
+          document.getElementById('nav-lock-sms').style.display       = 'none';
+          document.getElementById('nav-lock-stats').style.display     = 'none';
+          document.getElementById('nav-lock-webhooks').style.display  = 'none';
           toast('🎉 Bienvenue en Premium ! SMS automatiques activés.', 'success');
         }
       }
@@ -2703,6 +3071,8 @@ function renderAll() {
   renderSocs();
   renderLogements();
   renderSmsHist();
+  // Apply current language
+  setLang(currentLang);
 }
 
 // ============================================================
