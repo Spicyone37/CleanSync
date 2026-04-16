@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanSync — Gestionnaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --teal: #1D9E75;
+  --teal-light: #25C090;
+  --teal-bg: #edfaf4;
+  --teal-dim: #d0f0e4;
+  --bg: #f5f4f0;
+  --white: #ffffff;
+  --surface: #fafaf8;
+  --border: #e2e0d8;
+  --border-strong: #c8c5ba;
+  --text: #1a1a18;
+  --text-muted: #7a7870;
+  --text-light: #b0ada3;
+  --red: #c94f4f;
+  --red-bg: #fdf2f2;
+  --red-dim: #f5d5d5;
+  --orange: #c97c2a;
+  --orange-bg: #fdf6ee;
+  --radius: 12px;
+  --radius-sm: 7px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 50;
+}
+
+.main {
+  margin-left: 240px;
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-mark::before {
+  content: '';
+  width: 10px; height: 10px;
+  background: var(--teal);
+  border-radius: 50%;
+  display: inline-block;
+}
+.logo-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; letter-spacing: 0.3px; }
+
+.nav { padding: 16px 12px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--teal-bg); color: var(--teal); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-count {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  display: none;
+}
+.nav-count.visible { display: inline-block; }
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid var(--border);
+}
+.agent-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+.agent-avatar {
+  width: 30px; height: 30px;
+  background: var(--teal-bg);
+  border: 1px solid var(--teal-dim);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--teal); font-weight: 600;
+}
+.agent-info .name { font-size: 13px; font-weight: 500; }
+.agent-info .role { font-size: 11px; color: var(--text-muted); }
+.btn-logout-sm {
+  margin-top: 8px;
+  background: none; border: none;
+  color: var(--text-muted); font-size: 12px;
+  cursor: pointer; padding: 4px 12px;
+  text-decoration: underline;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 40;
+}
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+/* ── CONTENT ── */
+.content { padding: 28px 32px; }
+
+/* ── TABS ── */
+.tab-view { display: none; }
+.tab-view.active { display: block; }
+
+/* ── KPI STRIP ── */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.kpi-value {
+  font-family: 'Fraunces', serif;
+  font-size: 32px; font-weight: 600;
+  letter-spacing: -1px; line-height: 1;
+  color: var(--text);
+}
+.kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.kpi-card.accent { background: var(--teal); border-color: var(--teal); }
+.kpi-card.accent .kpi-label,
+.kpi-card.accent .kpi-sub { color: rgba(255,255,255,0.65); }
+.kpi-card.accent .kpi-value { color: #fff; }
+
+/* ── FILTERS ── */
+.filters {
+  display: flex; gap: 10px; align-items: center;
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.filter-select {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; padding: 8px 32px 8px 12px;
+  outline: none; cursor: pointer;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a7870' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.filter-select:focus { border-color: var(--teal); }
+.filter-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+/* ── TABLE ── */
+.table-wrap {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--bg); }
+th {
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  font-size: 13.5px;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.badge-en_cours { background: var(--orange-bg); color: var(--orange); border: 1px solid #f0d9b8; }
+.badge-terminee { background: var(--teal-bg); color: var(--teal); border: 1px solid var(--teal-dim); }
+.badge-incident  { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-dim); }
+.badge-faible    { background: var(--teal-bg); color: var(--teal); }
+.badge-normale   { background: var(--orange-bg); color: var(--orange); }
+.badge-urgente   { background: var(--red-bg); color: var(--red); }
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* ── MONO ── */
+.mono { font-family: 'DM Mono', monospace; font-size: 13px; }
+
+/* ── AGENT TAG ── */
+.agent-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px;
+}
+.agent-tag .av {
+  width: 24px; height: 24px;
+  background: var(--teal-bg);
+  border: 1px solid var(--teal-dim);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600; color: var(--teal);
+}
+
+/* ── PHOTO COUNT ── */
+.photo-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* ── ROW EXPAND (détail) ── */
+.row-expand {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.expand-inner {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.expand-section { display: flex; flex-direction: column; gap: 6px; }
+.expand-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 4px; }
+.expand-val { font-size: 13px; }
+.photo-thumbs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.photo-thumb-sm {
+  width: 56px; height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.photo-thumb-sm img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── RÉCAP MENSUEL ── */
+.recap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.recap-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.recap-card-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.recap-agent-name { font-size: 15px; font-weight: 600; }
+.recap-month { font-size: 12px; color: var(--text-muted); }
+.recap-stats {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.recap-stat .val {
+  font-family: 'Fraunces', serif;
+  font-size: 22px; font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--teal);
+}
+.recap-stat .lbl { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.recap-bar {
+  height: 3px;
+  background: var(--teal-dim);
+  margin: 0 20px 16px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.recap-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 2px;
+  transition: width 0.8s ease;
+}
+
+/* ── INCIDENTS TABLE ── */
+.inc-row-type {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.inc-row-type .inc-type { font-size: 13px; font-weight: 500; }
+.inc-row-type .inc-logement { font-size: 11px; color: var(--text-muted); }
+.inc-desc { font-size: 12px; color: var(--text-muted); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── MODAL PHOTO ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 200;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-img { max-width: 90vw; max-height: 85vh; border-radius: 8px; }
+.modal-close {
+  position: absolute; top: 20px; right: 20px;
+  background: rgba(255,255,255,0.15); border: none;
+  color: #fff; font-size: 20px; width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── AUTH ── */
+.auth-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-box {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 32px;
+  width: 380px;
+  box-shadow: var(--shadow-lg);
+}
+.auth-box h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 26px; font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.auth-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.field input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; padding: 11px 14px;
+  outline: none; transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--teal); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: none; border-radius: var(--radius-sm);
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 500;
+  padding: 10px 18px; transition: all 0.15s; text-decoration: none;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-light); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-ghost { background: none; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); }
+.btn:disabled { opacity: 0.4; pointer-events: none; }
+.btn-full { width: 100%; }
+
+/* ── EMPTY ── */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ── SPINNER ── */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+.spinner-dark {
+  border-color: rgba(0,0,0,0.1);
+  border-top-color: var(--teal);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── PERIOD SELECTOR ── */
+.period-tabs { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 8px; }
+.period-tab {
+  padding: 6px 14px; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: none;
+  color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.period-tab.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* ── RESOLVE BTN ── */
+.resolve-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-muted); cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.resolve-btn:hover { border-color: var(--teal); color: var(--teal); }
+.resolve-btn.resolved { color: var(--teal); border-color: var(--teal-dim); background: var(--teal-bg); cursor: default; }
+
+/* ── LOADING OVERLAY ── */
+.loading-row td {
+  text-align: center; padding: 40px;
+  color: var(--text-muted); font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .expand-inner { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-box">
+    <h2>CleanSync</h2>
+    <p>Tableau de bord gestionnaire</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="auth-email" placeholder="gestionnaire@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full" id="btn-login" style="margin-top:8px;padding:13px">
+      Accéder au tableau de bord
+    </button>
+  </div>
+</div>
+
+<!-- MODAL PHOTO -->
+<div class="modal-overlay" id="photo-modal">
+  <button class="modal-close" onclick="closeModal()">×</button>
+  <img class="modal-img" id="modal-img-el" src="" alt="Photo">
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">CleanSync</div>
+      <div class="logo-sub">Espace gestionnaire</div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active" data-tab="prestations" onclick="switchTab('prestations', this)">
+        <span class="nav-icon">📋</span> Prestations
+      </div>
+      <div class="nav-item" data-tab="incidents" onclick="switchTab('incidents', this)">
+        <span class="nav-icon">⚠️</span> Incidents
+        <span class="nav-count" id="inc-count-badge">0</span>
+      </div>
+      <div class="nav-item" data-tab="recap" onclick="switchTab('recap', this)">
+        <span class="nav-icon">📊</span> Récap mensuel
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="agent-pill">
+        <div class="agent-avatar" id="sidebar-avatar">G</div>
+        <div class="agent-info">
+          <div class="name" id="sidebar-name">Gestionnaire</div>
+          <div class="role">Administrateur</div>
+        </div>
+      </div>
+      <button class="btn-logout-sm" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title" id="page-title">Prestations</div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="refreshCurrent()">↻ Actualiser</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ════ TAB : PRESTATIONS ════ -->
+      <div class="tab-view active" id="tab-prestations">
+
+        <!-- KPI -->
+        <div class="kpi-strip" id="kpi-strip">
+          <div class="kpi-card accent">
+            <div class="kpi-label">Ce mois</div>
+            <div class="kpi-value" id="kpi-mois">—</div>
+            <div class="kpi-sub">prestations terminées</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Heures totales</div>
+            <div class="kpi-value" id="kpi-heures">—</div>
+            <div class="kpi-sub">ce mois</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">En cours</div>
+            <div class="kpi-value" id="kpi-encours">—</div>
+            <div class="kpi-sub">prestations actives</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Incidents ouverts</div>
+            <div class="kpi-value" id="kpi-incidents" style="color:var(--red)">—</div>
+            <div class="kpi-sub">non résolus</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+          <span class="filter-label">Filtrer :</span>
+          <select class="filter-select" id="filter-statut" onchange="loadPrestations()">
+            <option value="">Tous les statuts</option>
+            <option value="en_cours">En cours</option>
+            <option value="terminee">Terminées</option>
+            <option value="incident">Avec incident</option>
+          </select>
+          <select class="filter-select" id="filter-agent" onchange="loadPrestations()">
+            <option value="">Tous les agents</option>
+          </select>
+          <select class="filter-select" id="filter-logement" onchange="loadPrestations()">
+            <option value="">Tous les logements</option>
+          </select>
+          <input type="date" class="filter-select" id="filter-date" onchange="loadPrestations()" style="padding:7px 12px">
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Logement</th>
+                <th>Agent</th>
+                <th>Date</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Durée</th>
+                <th>Statut</th>
+                <th>Photos</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="prest-tbody">
+              <tr class="loading-row"><td colspan="9"><span class="spinner spinner-dark"></span> Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ TAB : INCIDENTS ════ -->
+      <div class="tab-view" id="tab-incidents">
+        <div class="filters">
+          <span class="filter-label">Gravité :</span>
+          <select class="filter-select" id="filter-gravite" onchange="loadIncidents()">
+            <option value="">Toutes</option>
+            <option value="urgente">Urgente</option>
+            <option value="normale">Normale</option>
+            <option value="faible">Faible</option>
+          </select>
+          <select class="filter-select" id="filter-inc-resolu" onchange="loadIncidents()">
+            <option value="false">Non résolus</option>
+            <option value="true">Résolus</option>
+            <option value="">Tous</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Type / Logement</th>
+                <th>Agent</th>
+                <th>Date</th>
+                <th>Gravité</th>
+                <th>Description</th>
+                <th>Photos</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="inc-tbody">
+              <tr class="loading-row"><td colspan="7"><span class="spinner spinner-dark"></span> Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ TAB : RÉCAP MENSUEL ════ -->
+      <div class="tab-view" id="tab-recap">
+        <div class="filters" style="margin-bottom:20px">
+          <div class="period-tabs" id="period-tabs">
+            <button class="period-tab active" data-months="1" onclick="selectPeriod(this)">Ce mois</button>
+            <button class="period-tab" data-months="3" onclick="selectPeriod(this)">3 mois</button>
+            <button class="period-tab" data-months="6" onclick="selectPeriod(this)">6 mois</button>
+            <button class="period-tab" data-months="12" onclick="selectPeriod(this)">12 mois</button>
+          </div>
+        </div>
+
+        <div class="recap-grid" id="recap-grid">
+          <div style="text-align:center;padding:40px;color:var(--text-muted)">
+            <span class="spinner spinner-dark"></span> Chargement...
+          </div>
+        </div>
+
+        <!-- Table détail mensuel -->
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mois</th>
+                <th>Agent</th>
+                <th>Prestations</th>
+                <th>Heures totales</th>
+                <th>Logements</th>
+                <th>Incidents</th>
+              </tr>
+            </thead>
+            <tbody id="recap-tbody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner spinner-dark"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let expandedRow = null;
+let currentPeriodMonths = 1;
+let currentTab = 'prestations';
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function fmt(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+function fmtDate(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function fmtTime(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+}
+function fmtDuree(min) {
+  if (!min) return '—';
+  const h = Math.floor(min/60), m = min%60;
+  return h > 0 ? `${h}h${String(m).padStart(2,'0')}` : `${m} min`;
+}
+function fmtMois(isoStr) {
+  if (!isoStr) return '—';
+  return new Date(isoStr).toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+}
+function initials(name) {
+  return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+function typeLabel(t) {
+  const m = { degat:'Dégât matériel', equipement_manquant:'Équip. manquant', equipement_casse:'Équip. cassé', hygiene:'Hygiène', autre:'Autre' };
+  return m[t] || t;
+}
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pwd   = document.getElementById('auth-password').value;
+  const btn   = document.getElementById('btn-login');
+  btn.innerHTML = '<span class="spinner"></span> Connexion...'; btn.disabled = true;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+  if (error) {
+    btn.textContent = 'Accéder au tableau de bord'; btn.disabled = false;
+    alert('Identifiants incorrects'); return;
+  }
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('sidebar-name').textContent = data.user.email.split('@')[0];
+  document.getElementById('sidebar-avatar').textContent = initials(data.user.email.split('@')[0]);
+  initDashboard();
+});
+
+async function logout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+async function initDashboard() {
+  await Promise.all([loadFilters(), loadKPIs(), loadPrestations()]);
+}
+
+async function loadFilters() {
+  const [{ data: agents }, { data: logements }] = await Promise.all([
+    sb.from('agents').select('id,nom').eq('actif', true).order('nom'),
+    sb.from('logements').select('id,nom').order('nom')
+  ]);
+
+  const agSel = document.getElementById('filter-agent');
+  (agents||[]).forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id; o.textContent = a.nom;
+    agSel.appendChild(o);
+  });
+
+  const lgSel = document.getElementById('filter-logement');
+  (logements||[]).forEach(l => {
+    const o = document.createElement('option');
+    o.value = l.id; o.textContent = l.nom;
+    lgSel.appendChild(o);
+  });
+}
+
+// ═══════════════════════════════════════
+// KPIs
+// ═══════════════════════════════════════
+async function loadKPIs() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const [{ data: prestMois }, { data: encours }, { data: incOuverts }] = await Promise.all([
+    sb.from('v_prestations').select('duree_minutes').gte('heure_debut', startOfMonth).eq('statut', 'terminee'),
+    sb.from('prestations').select('id', { count: 'exact' }).eq('statut', 'en_cours'),
+    sb.from('incidents').select('id', { count: 'exact' }).eq('resolu', false)
+  ]);
+
+  const nbMois = prestMois?.length || 0;
+  const totalMin = (prestMois||[]).reduce((s,p) => s + (p.duree_minutes||0), 0);
+  const totalH = (totalMin/60).toFixed(1);
+
+  document.getElementById('kpi-mois').textContent = nbMois;
+  document.getElementById('kpi-heures').textContent = totalH + 'h';
+  document.getElementById('kpi-encours').textContent = encours?.length || 0;
+  const nbInc = incOuverts?.length || 0;
+  document.getElementById('kpi-incidents').textContent = nbInc;
+
+  const badge = document.getElementById('inc-count-badge');
+  if (nbInc > 0) { badge.textContent = nbInc; badge.classList.add('visible'); }
+}
+
+// ═══════════════════════════════════════
+// PRESTATIONS
+// ═══════════════════════════════════════
+async function loadPrestations() {
+  const tbody = document.getElementById('prest-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="9"><span class="spinner spinner-dark"></span> Chargement...</td></tr>';
+  expandedRow = null;
+
+  let q = sb.from('v_prestations').select('*').order('heure_debut', { ascending: false }).limit(100);
+
+  const statut  = document.getElementById('filter-statut').value;
+  const agentId = document.getElementById('filter-agent').value;
+  const logId   = document.getElementById('filter-logement').value;
+  const date    = document.getElementById('filter-date').value;
+
+  if (statut)  q = q.eq('statut', statut);
+  if (agentId) q = q.eq('agent_id', agentId);
+  if (logId)   q = q.eq('logement_id', logId);
+  if (date) {
+    q = q.gte('heure_debut', date + 'T00:00:00').lte('heure_debut', date + 'T23:59:59');
+  }
+
+  const { data, error } = await q;
+  if (error || !data?.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>Aucune prestation trouvée</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  data.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.dataset.id = p.id;
+    tr.innerHTML = `
+      <td><strong>${p.logement_nom || '—'}</strong></td>
+      <td><div class="agent-tag"><div class="av">${initials(p.agent_nom)}</div>${p.agent_nom||'—'}</div></td>
+      <td>${fmtDate(p.heure_debut)}</td>
+      <td class="mono">${fmtTime(p.heure_debut)}</td>
+      <td class="mono">${fmtTime(p.heure_fin)}</td>
+      <td class="mono">${fmtDuree(p.duree_minutes)}</td>
+      <td><span class="badge badge-${p.statut}"><span class="badge-dot"></span>${p.statut.replace('_',' ')}</span></td>
+      <td><span class="photo-pill">📷 ${p.nb_photos||0}</span>${p.nb_incidents>0 ? ` <span class="photo-pill" style="color:var(--red)">⚠️ ${p.nb_incidents}</span>` : ''}</td>
+      <td><span style="color:var(--text-muted);font-size:16px">›</span></td>`;
+    tr.addEventListener('click', () => toggleExpand(tr, p));
+    tbody.appendChild(tr);
+  });
+}
+
+async function toggleExpand(tr, p) {
+  // fermer si déjà ouvert
+  const existing = document.getElementById('expand-' + p.id);
+  if (existing) { existing.remove(); expandedRow = null; return; }
+  if (expandedRow) { document.getElementById('expand-' + expandedRow)?.remove(); }
+  expandedRow = p.id;
+
+  // Charger photos + incidents
+  const [{ data: photos }, { data: incidents }] = await Promise.all([
+    sb.from('photos_prestation').select('*').eq('prestation_id', p.id).order('ordre'),
+    sb.from('incidents').select('*').eq('prestation_id', p.id)
+  ]);
+
+  const photosPrest = (photos||[]).filter(x => x.type === 'prestation');
+  const photosInc   = (photos||[]).filter(x => x.type === 'incident');
+
+  const photosHtml = (arr) => {
+    if (!arr.length) return '<span style="color:var(--text-muted);font-size:12px">Aucune photo</span>';
+    return arr.map(ph => {
+      const { data: url } = sb.storage.from('prestations-photos').getPublicUrl(ph.storage_path);
+      return `<div class="photo-thumb-sm" onclick="openModal('${url.publicUrl}')"><img src="${url.publicUrl}" onerror="this.parentElement.style.display='none'"></div>`;
+    }).join('');
+  };
+
+  const incHtml = incidents?.length ? incidents.map(i => `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="badge badge-${i.gravite}">${i.gravite}</span>
+        <span style="font-size:13px;font-weight:500">${typeLabel(i.type_incident)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted)">${i.description}</div>
+      <div class="photo-thumbs" style="margin-top:8px">${photosHtml(photosInc)}</div>
+    </div>`).join('') : '<span style="color:var(--text-muted);font-size:12px">Aucun incident déclaré</span>';
+
+  const expTr = document.createElement('tr');
+  expTr.className = 'row-expand';
+  expTr.id = 'expand-' + p.id;
+  expTr.innerHTML = `<td colspan="9">
+    <div class="expand-inner">
+      <div class="expand-section">
+        <div class="expand-title">Notes</div>
+        <div class="expand-val">${p.notes || '<span style="color:var(--text-muted)">Aucune note</span>'}</div>
+      </div>
+      <div class="expand-section">
+        <div class="expand-title">Photos prestation (${photosPrest.length})</div>
+        <div class="photo-thumbs">${photosHtml(photosPrest)}</div>
+      </div>
+      <div class="expand-section">
+        <div class="expand-title">Incidents (${incidents?.length||0})</div>
+        ${incHtml}
+      </div>
+    </div>
+  </td>`;
+  tr.after(expTr);
+}
+
+// ═══════════════════════════════════════
+// INCIDENTS
+// ═══════════════════════════════════════
+async function loadIncidents() {
+  const tbody = document.getElementById('inc-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner spinner-dark"></span></td></tr>';
+
+  const gravite = document.getElementById('filter-gravite').value;
+  const resolu  = document.getElementById('filter-inc-resolu').value;
+
+  let q = sb.from('incidents')
+    .select(`*, prestations(heure_debut, logement_id, agent_id, logements(nom), agents(nom))`)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (gravite) q = q.eq('gravite', gravite);
+  if (resolu !== '') q = q.eq('resolu', resolu === 'true');
+
+  const { data, error } = await q;
+  if (error || !data?.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">✅</div><p>Aucun incident trouvé</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  data.forEach(i => {
+    const prest = i.prestations;
+    const logNom  = prest?.logements?.nom || '—';
+    const agNom   = prest?.agents?.nom || '—';
+    const date    = fmtDate(prest?.heure_debut);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="inc-row-type"><span class="inc-type">${typeLabel(i.type_incident)}</span><span class="inc-logement">📍 ${logNom}</span></div></td>
+      <td><div class="agent-tag"><div class="av">${initials(agNom)}</div>${agNom}</div></td>
+      <td>${date}</td>
+      <td><span class="badge badge-${i.gravite}">${i.gravite}</span></td>
+      <td><div class="inc-desc" title="${i.description}">${i.description}</div></td>
+      <td id="inc-photos-${i.id}"><span class="photo-pill">⏳</span></td>
+      <td><button class="resolve-btn ${i.resolu?'resolved':''}" id="resolve-${i.id}" onclick="toggleResolve('${i.id}', ${i.resolu})">${i.resolu ? '✓ Résolu' : 'Marquer résolu'}</button></td>`;
+    tbody.appendChild(tr);
+
+    // Charger nb photos en arrière-plan
+    sb.from('photos_prestation')
+      .select('id', { count: 'exact' })
+      .eq('prestation_id', i.prestation_id)
+      .eq('type', 'incident')
+      .then(({ data: ph }) => {
+        const el = document.getElementById('inc-photos-' + i.id);
+        if (el) el.innerHTML = `<span class="photo-pill">📷 ${ph?.length||0}</span>`;
+      });
+  });
+}
+
+async function toggleResolve(id, current) {
+  const btn = document.getElementById('resolve-' + id);
+  btn.disabled = true;
+  await sb.from('incidents').update({ resolu: !current }).eq('id', id);
+  loadIncidents();
+  loadKPIs();
+}
+
+// ═══════════════════════════════════════
+// RÉCAP MENSUEL
+// ═══════════════════════════════════════
+async function loadRecap() {
+  document.getElementById('recap-grid').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="spinner spinner-dark"></span></div>';
+  document.getElementById('recap-tbody').innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner spinner-dark"></span></td></tr>';
+
+  const since = new Date();
+  since.setMonth(since.getMonth() - currentPeriodMonths);
+
+  const { data, error } = await sb.from('v_recap_mensuel').select('*').gte('mois', since.toISOString()).order('mois', { ascending: false });
+
+  if (error || !data?.length) {
+    document.getElementById('recap-grid').innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Aucune donnée pour cette période</p></div>';
+    document.getElementById('recap-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">Aucune donnée</td></tr>';
+    return;
+  }
+
+  // Cards par agent (mois le plus récent)
+  const byAgent = {};
+  data.forEach(r => {
+    if (!byAgent[r.agent_id]) byAgent[r.agent_id] = [];
+    byAgent[r.agent_id].push(r);
+  });
+
+  const maxH = Math.max(...data.map(r => parseFloat(r.total_heures)||0));
+
+  document.getElementById('recap-grid').innerHTML = '';
+  Object.values(byAgent).forEach(rows => {
+    const latest = rows[0];
+    const totalH = rows.reduce((s,r) => s + (parseFloat(r.total_heures)||0), 0).toFixed(1);
+    const totalP = rows.reduce((s,r) => s + (r.nb_prestations||0), 0);
+    const totalI = rows.reduce((s,r) => s + (r.total_incidents||0), 0);
+    const pct = maxH > 0 ? ((parseFloat(latest.total_heures)||0) / maxH * 100).toFixed(0) : 0;
+
+    const card = document.createElement('div');
+    card.className = 'recap-card';
+    card.innerHTML = `
+      <div class="recap-card-header">
+        <div>
+          <div class="recap-agent-name">${latest.agent_nom}</div>
+          <div class="recap-month">${fmtMois(latest.mois)}</div>
+        </div>
+        <div class="agent-avatar" style="width:36px;height:36px;font-size:14px">${initials(latest.agent_nom)}</div>
+      </div>
+      <div class="recap-stats">
+        <div class="recap-stat"><div class="val">${latest.total_heures}h</div><div class="lbl">Ce mois</div></div>
+        <div class="recap-stat"><div class="val">${latest.nb_prestations}</div><div class="lbl">Prestations</div></div>
+        <div class="recap-stat"><div class="val" style="color:${totalI>0?'var(--red)':'var(--teal)'}">${totalI}</div><div class="lbl">Incidents</div></div>
+      </div>
+      <div class="recap-bar"><div class="recap-bar-fill" style="width:${pct}%"></div></div>`;
+    document.getElementById('recap-grid').appendChild(card);
+  });
+
+  // Table détail
+  document.getElementById('recap-tbody').innerHTML = '';
+  data.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtMois(r.mois)}</td>
+      <td><div class="agent-tag"><div class="av">${initials(r.agent_nom)}</div>${r.agent_nom}</div></td>
+      <td class="mono">${r.nb_prestations}</td>
+      <td class="mono"><strong>${parseFloat(r.total_heures).toFixed(1)}h</strong></td>
+      <td class="mono">${r.nb_logements_distincts}</td>
+      <td class="mono" style="color:${r.total_incidents>0?'var(--red)':'var(--text-muted)'}">${r.total_incidents}</td>`;
+    document.getElementById('recap-tbody').appendChild(tr);
+  });
+}
+
+function selectPeriod(btn) {
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPeriodMonths = parseInt(btn.dataset.months);
+  loadRecap();
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+  currentTab = tab;
+
+  const titles = { prestations: 'Prestations', incidents: 'Incidents', recap: 'Récapitulatif mensuel' };
+  document.getElementById('page-title').textContent = titles[tab];
+
+  if (tab === 'incidents') loadIncidents();
+  if (tab === 'recap') loadRecap();
+}
+
+function refreshCurrent() {
+  if (currentTab === 'prestations') { loadKPIs(); loadPrestations(); }
+  if (currentTab === 'incidents') loadIncidents();
+  if (currentTab === 'recap') loadRecap();
+}
+
+// ═══════════════════════════════════════
+// MODAL PHOTO
+// ═══════════════════════════════════════
+function openModal(url) {
+  document.getElementById('modal-img-el').src = url;
+  document.getElementById('photo-modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('photo-modal').classList.remove('open');
+}
+document.getElementById('photo-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ═══════════════════════════════════════
+// INIT — session existante
+// ═══════════════════════════════════════
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('sidebar-name').textContent = session.user.email.split('@')[0];
+    document.getElementById('sidebar-avatar').textContent = initials(session.user.email.split('@')[0]);
+    initDashboard();
+  }
+})();
+</script>
+</body>
+</html>
