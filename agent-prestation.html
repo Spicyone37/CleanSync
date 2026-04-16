@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CleanSync — Espace Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --teal: #1D9E75;
+    --teal-light: #25C090;
+    --teal-dim: #145f46;
+    --teal-bg: rgba(29,158,117,0.08);
+    --bg: #0d0f0e;
+    --surface: #161a18;
+    --surface2: #1e2421;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8ede9;
+    --text-muted: #7a8c82;
+    --red: #e05c5c;
+    --orange: #e09a3c;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,15,14,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+  .user-badge {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; padding: 20px; }
+  .screen.active { display: block; }
+
+  /* ── AUTH ── */
+  .auth-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 32px;
+  }
+  .auth-logo {
+    text-align: center;
+  }
+  .auth-logo .mark {
+    width: 64px; height: 64px;
+    background: var(--teal-bg);
+    border: 1px solid rgba(29,158,117,0.3);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 28px;
+  }
+  .auth-logo h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+  .auth-logo p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .field input,
+  .field select,
+  .field textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    -webkit-appearance: none;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus { border-color: var(--teal); }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8c82' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  .field textarea { resize: none; min-height: 80px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: none; border-radius: var(--radius); cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500;
+    padding: 14px 20px;
+    transition: all 0.15s;
+    width: 100%;
+    text-decoration: none;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: var(--teal-light); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: rgba(224,92,92,0.12); color: var(--red); border: 1px solid rgba(224,92,92,0.2); }
+  .btn-outline { background: transparent; color: var(--teal); border: 1px solid rgba(29,158,117,0.4); }
+  .btn:disabled { opacity: 0.45; pointer-events: none; }
+  .btn-lg { padding: 18px 20px; font-size: 16px; font-weight: 600; border-radius: 16px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px;
+  }
+
+  /* ── STATUS BADGE ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .badge-active { background: rgba(29,158,117,0.15); color: var(--teal); }
+  .badge-done { background: rgba(255,255,255,0.07); color: var(--text-muted); }
+  .badge-incident { background: rgba(224,92,92,0.12); color: var(--red); }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── TIMER ── */
+  .timer-block {
+    background: var(--teal-bg);
+    border: 1px solid rgba(29,158,117,0.2);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .timer-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 42px; font-weight: 500;
+    color: var(--teal);
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .timer-label { font-size: 12px; color: var(--text-muted); }
+  .timer-start-time { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+  /* ── PHOTO UPLOAD ── */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .remove-btn {
+    position: absolute; top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    background: rgba(0,0,0,0.7);
+    border: none; border-radius: 50%;
+    color: #fff; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .photo-add {
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px dashed rgba(29,158,117,0.4);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; gap: 4px;
+    color: var(--teal); font-size: 11px; font-weight: 500;
+    transition: background 0.2s;
+  }
+  .photo-add:active { background: var(--teal-bg); }
+  .photo-add svg { opacity: 0.7; }
+  #file-input { display: none; }
+  .photo-counter {
+    font-size: 12px; color: var(--text-muted); text-align: right; margin-bottom: 8px;
+  }
+
+  /* ── INCIDENT FORM ── */
+  .incident-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+  .incident-toggle span { font-size: 14px; font-weight: 500; }
+  .toggle-icon { font-size: 18px; color: var(--red); transition: transform 0.2s; }
+  .toggle-icon.open { transform: rotate(45deg); }
+
+  .incident-form {
+    background: rgba(224,92,92,0.04);
+    border: 1px solid rgba(224,92,92,0.15);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .incident-form.open { display: flex; }
+
+  /* ── GRAVITY SELECTOR ── */
+  .gravity-group { display: flex; gap: 8px; }
+  .gravity-btn {
+    flex: 1; padding: 10px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text-muted); font-size: 12px; font-weight: 500;
+    cursor: pointer; text-align: center; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .gravity-btn.selected-faible { background: rgba(29,158,117,0.12); border-color: var(--teal); color: var(--teal); }
+  .gravity-btn.selected-normale { background: rgba(224,154,60,0.12); border-color: var(--orange); color: var(--orange); }
+  .gravity-btn.selected-urgente { background: rgba(224,92,92,0.12); border-color: var(--red); color: var(--red); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+  /* ── LOGEMENT SELECT ── */
+  .logement-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .logement-item:active { border-color: var(--teal); }
+  .logement-item .name { font-size: 15px; font-weight: 500; }
+  .logement-item .addr { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .logement-item .arrow { color: var(--text-muted); font-size: 18px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 14px; font-weight: 500;
+    padding: 12px 20px; border-radius: 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 999; opacity: 0; transition: opacity 0.2s;
+    white-space: nowrap; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { border-color: rgba(29,158,117,0.4); color: var(--teal); }
+  .toast.error { border-color: rgba(224,92,92,0.4); color: var(--red); }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── INFO ROW ── */
+  .info-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .lbl { color: var(--text-muted); }
+  .info-row .val { font-weight: 500; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 20px; font-weight: 600;
+    letter-spacing: -0.4px;
+    margin-bottom: 6px;
+  }
+  .section-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--text-muted); font-size: 14px;
+  }
+  .empty .icon { font-size: 36px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════════════════
+     SCREEN : AUTH
+════════════════════════════════ -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="mark">🧹</div>
+      <h1>CleanSync</h1>
+      <p>Espace agent de ménage</p>
+    </div>
+    <div class="auth-card">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="votre@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-lg" id="btn-login">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     HEADER (visible après auth)
+════════════════════════════════ -->
+<div id="app-header" style="display:none">
+  <div class="app-header">
+    <div class="logo"><div class="logo-dot"></div>CleanSync</div>
+    <div class="user-badge" id="header-agent-name">Agent</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN : CHOIX LOGEMENT
+════════════════════════════════ -->
+<div id="screen-logements" class="screen">
+  <div class="section-title">Nouvelle prestation</div>
+  <div class="section-sub">Sélectionnez le logement à traiter</div>
+  <div id="logements-list"></div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN : PRESTATION EN COURS
+════════════════════════════════ -->
+<div id="screen-prestation" class="screen">
+
+  <!-- Logement sélectionné -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:2px">Logement</div>
+        <div style="font-size:17px;font-weight:600" id="prest-logement-name">—</div>
+      </div>
+      <span class="badge badge-active" id="prest-status-badge">
+        <span class="badge-dot"></span> En cours
+      </span>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-block" id="timer-block">
+    <div class="timer-value" id="timer-display">00:00:00</div>
+    <div class="timer-label">Durée de la prestation</div>
+    <div class="timer-start-time" id="timer-start-label"></div>
+  </div>
+
+  <!-- Bouton démarrer / terminer -->
+  <div id="btn-start-wrap">
+    <button class="btn btn-primary btn-lg" id="btn-start">
+      ▶ Démarrer la prestation
+    </button>
+  </div>
+  <div id="btn-finish-wrap" style="display:none">
+    <button class="btn btn-outline btn-lg" id="btn-finish">
+      ⏹ Terminer la prestation
+    </button>
+  </div>
+
+  <div class="divider" style="margin:16px 0"></div>
+
+  <!-- Photos prestation -->
+  <div class="card">
+    <div class="card-title">📷 Photos de la prestation</div>
+    <div class="photo-counter"><span id="photo-count-prest">0</span> / 15 photos</div>
+    <div class="photo-grid" id="photo-grid-prest"></div>
+    <input type="file" id="file-input-prest" accept="image/*" multiple capture="environment">
+    <button class="btn btn-secondary" onclick="document.getElementById('file-input-prest').click()">
+      + Ajouter des photos
+    </button>
+  </div>
+
+  <!-- Déclaration d'incident -->
+  <div class="card">
+    <div class="card-title">⚠️ Incident (optionnel)</div>
+    <div class="incident-toggle" id="incident-toggle">
+      <span>Déclarer un incident</span>
+      <span class="toggle-icon" id="toggle-icon">+</span>
+    </div>
+    <div class="incident-form" id="incident-form">
+      <div class="field">
+        <label>Type d'incident</label>
+        <select id="incident-type">
+          <option value="degat">Dégât matériel</option>
+          <option value="equipement_manquant">Équipement manquant</option>
+          <option value="equipement_casse">Équipement cassé</option>
+          <option value="hygiene">Problème d'hygiène</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="incident-desc" placeholder="Décrivez l'incident..."></textarea>
+      </div>
+      <div class="field">
+        <label>Gravité</label>
+        <div class="gravity-group">
+          <button class="gravity-btn" data-val="faible" onclick="selectGravity('faible')">🟢 Faible</button>
+          <button class="gravity-btn selected-normale" data-val="normale" onclick="selectGravity('normale')">🟠 Normale</button>
+          <button class="gravity-btn" data-val="urgente" onclick="selectGravity('urgente')">🔴 Urgente</button>
+        </div>
+      </div>
+      <div class="card-title" style="margin-bottom:8px">📷 Photos de l'incident</div>
+      <div class="photo-counter"><span id="photo-count-inc">0</span> / 10 photos</div>
+      <div class="photo-grid" id="photo-grid-inc"></div>
+      <input type="file" id="file-input-inc" accept="image/*" multiple capture="environment">
+      <button class="btn btn-secondary" onclick="document.getElementById('file-input-inc').click()">
+        + Photos de l'incident
+      </button>
+    </div>
+  </div>
+
+  <!-- Notes libres -->
+  <div class="card">
+    <div class="card-title">📝 Notes</div>
+    <div class="field">
+      <textarea id="prest-notes" placeholder="Observations, consignes transmises..."></textarea>
+    </div>
+  </div>
+
+  <!-- Valider -->
+  <button class="btn btn-primary btn-lg" id="btn-submit" style="margin-top:8px" disabled>
+    ✓ Valider la prestation
+  </button>
+  <button class="btn btn-secondary" id="btn-cancel" style="margin-top:10px">
+    Annuler
+  </button>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN : CONFIRMATION
+════════════════════════════════ -->
+<div id="screen-confirm" class="screen">
+  <div style="text-align:center;padding:40px 0 24px">
+    <div style="font-size:56px;margin-bottom:16px">✅</div>
+    <div class="section-title">Prestation enregistrée</div>
+    <div class="section-sub" id="confirm-summary"></div>
+  </div>
+  <div class="card">
+    <div class="info-row"><span class="lbl">Logement</span><span class="val" id="conf-logement">—</span></div>
+    <div class="info-row"><span class="lbl">Durée</span><span class="val" id="conf-duree">—</span></div>
+    <div class="info-row"><span class="lbl">Photos</span><span class="val" id="conf-photos">—</span></div>
+    <div class="info-row"><span class="lbl">Incident</span><span class="val" id="conf-incident">—</span></div>
+  </div>
+  <button class="btn btn-primary btn-lg" id="btn-new-prest" style="margin-top:16px">
+    + Nouvelle prestation
+  </button>
+  <button class="btn btn-secondary" id="btn-logout" style="margin-top:10px">
+    Se déconnecter
+  </button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG — À adapter
+// ═══════════════════════════════════════════════
+const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let currentUser = null;
+let currentAgent = null;
+let currentLogement = null;
+let currentPrestation = null;
+let timerInterval = null;
+let startTime = null;
+let photosPrest = [];   // { file, preview }
+let photosInc = [];     // { file, preview }
+let graviteSelected = 'normale';
+let incidentOpen = false;
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+function formatDuration(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600).toString().padStart(2, '0');
+  const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${sec}`;
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function minutesToDuration(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h > 0 ? `${h}h${m.toString().padStart(2,'0')}` : `${m} min`;
+}
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pwd = document.getElementById('auth-password').value;
+  if (!email || !pwd) { toast('Renseignez email et mot de passe', 'error'); return; }
+
+  const btn = document.getElementById('btn-login');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+  if (error) {
+    toast('Identifiants incorrects', 'error');
+    btn.innerHTML = 'Se connecter'; btn.disabled = false;
+    return;
+  }
+  currentUser = data.user;
+  await loadAgent();
+});
+
+async function loadAgent() {
+  const { data, error } = await sb
+    .from('agents')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .single();
+
+  if (error || !data) {
+    toast('Profil agent introuvable. Contactez l\'administrateur.', 'error');
+    await sb.auth.signOut();
+    document.getElementById('btn-login').innerHTML = 'Se connecter';
+    document.getElementById('btn-login').disabled = false;
+    return;
+  }
+  currentAgent = data;
+  document.getElementById('header-agent-name').textContent = currentAgent.nom;
+  document.getElementById('app-header').style.display = 'block';
+  await loadLogements();
+}
+
+// ═══════════════════════════════════════════════
+// LOGEMENTS
+// ═══════════════════════════════════════════════
+async function loadLogements() {
+  showScreen('logements');
+  const list = document.getElementById('logements-list');
+  list.innerHTML = '<div class="empty"><div class="icon">⏳</div>Chargement...</div>';
+
+  const { data, error } = await sb.from('logements').select('*').order('nom');
+  if (error || !data?.length) {
+    list.innerHTML = '<div class="empty"><div class="icon">🏠</div>Aucun logement disponible</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  data.forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'logement-item';
+    el.innerHTML = `
+      <div>
+        <div class="name">${l.nom || 'Logement sans nom'}</div>
+        <div class="addr">${l.adresse || ''}</div>
+      </div>
+      <span class="arrow">›</span>`;
+    el.addEventListener('click', () => startPrestation(l));
+    list.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PRESTATION
+// ═══════════════════════════════════════════════
+function startPrestation(logement) {
+  currentLogement = logement;
+  currentPrestation = null;
+  photosPrest = []; photosInc = [];
+  graviteSelected = 'normale';
+  incidentOpen = false;
+
+  document.getElementById('prest-logement-name').textContent = logement.nom;
+  document.getElementById('prest-notes').value = '';
+  document.getElementById('incident-desc').value = '';
+  document.getElementById('incident-form').classList.remove('open');
+  document.getElementById('toggle-icon').classList.remove('open');
+  document.getElementById('timer-display').textContent = '00:00:00';
+  document.getElementById('timer-start-label').textContent = '';
+  document.getElementById('btn-start-wrap').style.display = 'block';
+  document.getElementById('btn-finish-wrap').style.display = 'none';
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('prest-status-badge').className = 'badge badge-active';
+  document.getElementById('prest-status-badge').innerHTML = '<span class="badge-dot"></span> En attente';
+
+  renderPhotoGrid('prest');
+  renderPhotoGrid('inc');
+  selectGravity('normale');
+
+  if (timerInterval) clearInterval(timerInterval);
+  startTime = null;
+
+  showScreen('prestation');
+}
+
+// Démarrer
+document.getElementById('btn-start').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-start');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  startTime = new Date();
+  const { data, error } = await sb.from('prestations').insert({
+    logement_id: currentLogement.id,
+    agent_id: currentAgent.id,
+    heure_debut: startTime.toISOString(),
+    statut: 'en_cours'
+  }).select().single();
+
+  if (error) {
+    toast('Erreur lors du démarrage', 'error');
+    btn.innerHTML = '▶ Démarrer la prestation'; btn.disabled = false;
+    return;
+  }
+  currentPrestation = data;
+  document.getElementById('btn-start-wrap').style.display = 'none';
+  document.getElementById('btn-finish-wrap').style.display = 'block';
+  document.getElementById('prest-status-badge').innerHTML = '<span class="badge-dot"></span> En cours';
+  document.getElementById('timer-start-label').textContent = `Démarrée à ${formatTime(startTime)}`;
+
+  timerInterval = setInterval(() => {
+    document.getElementById('timer-display').textContent = formatDuration(Date.now() - startTime.getTime());
+  }, 1000);
+
+  toast('Prestation démarrée ✓', 'success');
+});
+
+// Terminer
+document.getElementById('btn-finish').addEventListener('click', () => {
+  clearInterval(timerInterval);
+  document.getElementById('btn-finish').disabled = true;
+  document.getElementById('btn-submit').disabled = false;
+  document.getElementById('prest-status-badge').className = 'badge badge-done';
+  document.getElementById('prest-status-badge').innerHTML = '⏹ Terminée';
+  toast('Vous pouvez valider la prestation');
+});
+
+// ═══════════════════════════════════════════════
+// PHOTOS
+// ═══════════════════════════════════════════════
+function renderPhotoGrid(type) {
+  const photos = type === 'prest' ? photosPrest : photosInc;
+  const grid = document.getElementById('photo-grid-' + type);
+  const counter = document.getElementById('photo-count-' + type);
+  const max = type === 'prest' ? 15 : 10;
+
+  grid.innerHTML = '';
+  photos.forEach((p, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.innerHTML = `<img src="${p.preview}"><button class="remove-btn" onclick="removePhoto('${type}',${i})">×</button>`;
+    grid.appendChild(thumb);
+  });
+
+  if (photos.length < max) {
+    const add = document.createElement('div');
+    add.className = 'photo-add';
+    add.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Photo</span>`;
+    add.onclick = () => document.getElementById('file-input-' + type).click();
+    grid.appendChild(add);
+  }
+  counter.textContent = photos.length;
+}
+
+function removePhoto(type, index) {
+  if (type === 'prest') photosPrest.splice(index, 1);
+  else photosInc.splice(index, 1);
+  renderPhotoGrid(type);
+}
+
+function setupFileInput(type) {
+  const input = document.getElementById('file-input-' + type);
+  input.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    const arr = type === 'prest' ? photosPrest : photosInc;
+    const max = type === 'prest' ? 15 : 10;
+    const remaining = max - arr.length;
+    const toAdd = files.slice(0, remaining);
+
+    for (const file of toAdd) {
+      const preview = await readFileAsDataURL(file);
+      arr.push({ file, preview });
+    }
+    renderPhotoGrid(type);
+    input.value = '';
+  });
+}
+
+function readFileAsDataURL(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.readAsDataURL(file);
+  });
+}
+
+setupFileInput('prest');
+setupFileInput('inc');
+
+// ═══════════════════════════════════════════════
+// INCIDENT
+// ═══════════════════════════════════════════════
+document.getElementById('incident-toggle').addEventListener('click', () => {
+  incidentOpen = !incidentOpen;
+  document.getElementById('incident-form').classList.toggle('open', incidentOpen);
+  document.getElementById('toggle-icon').classList.toggle('open', incidentOpen);
+});
+
+function selectGravity(val) {
+  graviteSelected = val;
+  document.querySelectorAll('.gravity-btn').forEach(b => {
+    b.className = 'gravity-btn';
+    if (b.dataset.val === val) b.classList.add('selected-' + val);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-submit');
+  btn.innerHTML = '<span class="spinner"></span> Envoi en cours...';
+  btn.disabled = true;
+
+  const endTime = new Date();
+  const notes = document.getElementById('prest-notes').value.trim();
+  const hasIncident = incidentOpen && document.getElementById('incident-desc').value.trim();
+
+  try {
+    // 1. Mettre à jour la prestation
+    const { error: updErr } = await sb.from('prestations').update({
+      heure_fin: endTime.toISOString(),
+      statut: hasIncident ? 'incident' : 'terminee',
+      notes: notes || null
+    }).eq('id', currentPrestation.id);
+    if (updErr) throw updErr;
+
+    // 2. Upload photos prestation
+    for (let i = 0; i < photosPrest.length; i++) {
+      const p = photosPrest[i];
+      const path = `${currentPrestation.id}/prest_${i}_${Date.now()}.jpg`;
+      const { error: upErr } = await sb.storage.from('prestations-photos').upload(path, p.file);
+      if (!upErr) {
+        await sb.from('photos_prestation').insert({
+          prestation_id: currentPrestation.id,
+          storage_path: path,
+          type: 'prestation',
+          ordre: i
+        });
+      }
+    }
+
+    // 3. Incident + photos incident
+    if (hasIncident) {
+      const { data: inc, error: incErr } = await sb.from('incidents').insert({
+        prestation_id: currentPrestation.id,
+        type_incident: document.getElementById('incident-type').value,
+        description: document.getElementById('incident-desc').value.trim(),
+        gravite: graviteSelected
+      }).select().single();
+
+      if (!incErr && inc) {
+        for (let i = 0; i < photosInc.length; i++) {
+          const p = photosInc[i];
+          const path = `${currentPrestation.id}/inc_${i}_${Date.now()}.jpg`;
+          const { error: upErr } = await sb.storage.from('prestations-photos').upload(path, p.file);
+          if (!upErr) {
+            await sb.from('photos_prestation').insert({
+              prestation_id: currentPrestation.id,
+              storage_path: path,
+              type: 'incident',
+              ordre: i
+            });
+          }
+        }
+      }
+    }
+
+    // 4. Afficher confirmation
+    const dureeMin = Math.round((endTime - startTime) / 60000);
+    document.getElementById('conf-logement').textContent = currentLogement.nom;
+    document.getElementById('conf-duree').textContent = minutesToDuration(dureeMin);
+    document.getElementById('conf-photos').textContent = photosPrest.length + ' photo(s)';
+    document.getElementById('conf-incident').textContent = hasIncident ? '⚠️ Déclaré' : 'Aucun';
+    document.getElementById('confirm-summary').textContent =
+      `${formatTime(startTime)} → ${formatTime(endTime)} · ${minutesToDuration(dureeMin)}`;
+
+    showScreen('confirm');
+
+  } catch (err) {
+    console.error(err);
+    toast('Erreur lors de la validation', 'error');
+    btn.innerHTML = '✓ Valider la prestation';
+    btn.disabled = false;
+  }
+});
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+document.getElementById('btn-cancel').addEventListener('click', () => {
+  if (timerInterval) clearInterval(timerInterval);
+  showScreen('logements');
+});
+
+document.getElementById('btn-new-prest').addEventListener('click', () => {
+  showScreen('logements');
+});
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  currentUser = null; currentAgent = null;
+  document.getElementById('app-header').style.display = 'none';
+  showScreen('auth');
+});
+
+// ═══════════════════════════════════════════════
+// INIT — vérifier session existante
+// ═══════════════════════════════════════════════
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadAgent();
+  }
+})();
+</script>
+</body>
+</html>
