@@ -522,13 +522,12 @@ document.getElementById('btn-send-magic').addEventListener('click', async () => 
   btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
 
   const {error}=await sb.auth.signInWithOtp({
-    email,
-    options:{
-      emailRedirectTo: window.location.href,
-      data:{role:'agent'}
-    }
-  });
-
+  email,
+  options:{
+    emailRedirectTo: 'https://spicyone37.github.io/CleanSync/agent-prestation.html',
+    shouldCreateUser: false
+  }
+});
   if(error){toast('Erreur : '+error.message,'error');btn.innerHTML='Recevoir le lien de connexion';btn.disabled=false;return;}
   document.getElementById('magic-email-display').textContent=email;
   document.getElementById('magic-sent-sub').textContent=`Email envoyé à ${email}`;
