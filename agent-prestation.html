@@ -891,8 +891,7 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 // INIT : SESSION + MAGIC LINK HASH
 // ══════════════════════════════════
 (async()=>{
-  // PKCE : Supabase échange automatiquement le ?code= en session
-  const {data:{session}, error} = await sb.auth.getSession();
+  const {data:{session}} = await sb.auth.getSession();
   
   if(session && !currentUser){
     currentUser = session.user;
