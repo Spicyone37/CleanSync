@@ -198,10 +198,10 @@ input[type=file]{display:none}
         </div>
         <div class="hint-box">
           <span class="hint-icon">💡</span>
-          <span>Un lien de connexion vous sera envoyé par email. Pas besoin de mot de passe.</span>
+          <span>Un code à 6 chiffres vous sera envoyé par email.</span>
         </div>
         <button class="btn btn-primary btn-lg" id="btn-send-magic" style="margin-top:4px">
-          Recevoir le lien de connexion
+          Recevoir le code par email
         </button>
       </div>
 
@@ -513,7 +513,7 @@ function setChannel(ch){
 }
 
 // ══════════════════════════════════
-// MAGIC LINK EMAIL
+// OTP EMAIL
 // ══════════════════════════════════
 document.getElementById('btn-send-magic').addEventListener('click', async () => {
   const email=document.getElementById('auth-email').value.trim();
@@ -522,16 +522,20 @@ document.getElementById('btn-send-magic').addEventListener('click', async () => 
   btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
 
   const {error}=await sb.auth.signInWithOtp({
-  email,
-  options:{
-    emailRedirectTo: 'https://spicyone37.github.io/CleanSync/agent-prestation.html',
-    shouldCreateUser: false
-  }
-});
-  if(error){toast('Erreur : '+error.message,'error');btn.innerHTML='Recevoir le lien de connexion';btn.disabled=false;return;}
-  document.getElementById('magic-email-display').textContent=email;
-  document.getElementById('magic-sent-sub').textContent=`Email envoyé à ${email}`;
-  showScreen('magic-sent');
+    email,
+    options:{ shouldCreateUser: false }
+  });
+
+  if(error){toast('Erreur : '+error.message,'error');btn.innerHTML='Recevoir le code par email';btn.disabled=false;return;}
+
+  // Réutiliser l'écran OTP pour l'email
+  pendingPhone=email;
+  document.getElementById('otp-phone-display').textContent=email;
+  document.getElementById('otp-sub').innerHTML='Code envoyé à <strong>'+email+'</strong>';
+  setupOTPInputs();
+  showScreen('otp');
+  startResendTimer();
+  btn.innerHTML='Recevoir le code par email'; btn.disabled=false;
 });
 
 // ══════════════════════════════════
@@ -586,15 +590,24 @@ document.getElementById('btn-verify-otp').addEventListener('click', async () => 
   const btn=document.getElementById('btn-verify-otp');
   btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
 
-  const {data,error}=await sb.auth.verifyOtp({phone:pendingPhone,token:code,type:'sms'});
+  let result;
+  if(authChannel==='phone'){
+    result=await sb.auth.verifyOtp({phone:pendingPhone,token:code,type:'sms'});
+  } else {
+    result=await sb.auth.verifyOtp({email:pendingPhone,token:code,type:'email'});
+  }
+  const {data,error}=result;
   if(error){toast('Code incorrect ou expiré','error');btn.innerHTML='Vérifier';btn.disabled=false;return;}
   currentUser=data.user;
   await handlePostAuth();
 });
 
 async function resendOTP(){
-  const {error}=await sb.auth.signInWithOtp({phone:pendingPhone});
-  if(error){toast('Erreur renvoi','error');return;}
+  if(authChannel==='phone'){
+    await sb.auth.signInWithOtp({phone:pendingPhone});
+  } else {
+    await sb.auth.signInWithOtp({email:pendingPhone,options:{shouldCreateUser:false}});
+  }
   toast('Code renvoyé ✓','success');
   startResendTimer();
 }
