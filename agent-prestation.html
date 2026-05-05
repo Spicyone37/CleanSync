@@ -10,46 +10,71 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{
-  --teal:#1D9E75;--teal-light:#25C090;--teal-dim:#145f46;--teal-bg:rgba(29,158,117,.08);
+  --teal:#1D9E75;--teal-light:#25C090;--teal-bg:rgba(29,158,117,.08);
   --bg:#0d0f0e;--surface:#161a18;--surface2:#1e2421;--border:rgba(255,255,255,.07);
   --text:#e8ede9;--text-muted:#7a8c82;--red:#e05c5c;--orange:#e09a3c;
   --radius:14px;--radius-sm:8px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
 
-/* ── HEADER ── */
+/* HEADER */
 .app-header{position:sticky;top:0;z-index:100;background:rgba(13,15,14,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
 .logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:600;letter-spacing:-.3px}
 .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.user-badge{font-size:12px;color:var(--text-muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border)}
 
-/* ── BOTTOM NAV ── */
+/* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(22,26,24,.96);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 8px;cursor:pointer;font-size:10px;color:var(--text-muted);font-weight:500;gap:3px;transition:color .15s}
 .bnav-item.active{color:var(--teal)}
 .bnav-icon{font-size:20px;line-height:1}
-body{padding-bottom:80px}
 
-/* ── SCREENS ── */
+/* SCREENS */
 .screen{display:none;padding:20px}
 .screen.active{display:block}
 
-/* ── AUTH ── */
-.auth-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:32px}
+/* ── AUTH SCREENS ── */
+.auth-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:28px}
 .auth-logo .mark{width:64px;height:64px;background:var(--teal-bg);border:1px solid rgba(29,158,117,.3);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px}
 .auth-logo h1{font-size:24px;font-weight:600;letter-spacing:-.5px;text-align:center}
 .auth-logo p{color:var(--text-muted);font-size:14px;margin-top:4px;text-align:center}
-.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;gap:16px}
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;gap:14px}
+.auth-card h2{font-size:18px;font-weight:600;letter-spacing:-.3px}
+.auth-card p{font-size:13px;color:var(--text-muted);line-height:1.5}
 
-/* ── FORM ── */
+/* Toggle email/tel */
+.channel-toggle{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:2px}
+.ch-btn{flex:1;padding:9px;border-radius:8px;border:none;background:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.ch-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* OTP input */
+.otp-row{display:flex;gap:8px;justify-content:center}
+.otp-digit{width:44px;height:52px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:22px;font-weight:600;text-align:center;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.otp-digit:focus{border-color:var(--teal)}
+
+/* Resend */
+.resend-row{text-align:center;font-size:13px;color:var(--text-muted)}
+.resend-btn{background:none;border:none;color:var(--teal);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-decoration:underline}
+.resend-btn:disabled{color:var(--text-muted);text-decoration:none;cursor:default}
+
+/* FORM */
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px}
 .field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s;width:100%;-webkit-appearance:none}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal)}
-.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8c82' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.field input:focus{border-color:var(--teal)}
 .field textarea{resize:none;min-height:80px}
 
-/* ── BUTTONS ── */
+/* Phone input with flag */
+.phone-wrap{display:flex;gap:8px}
+.country-prefix{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Mono',monospace;font-size:14px;padding:12px 10px;white-space:nowrap;flex-shrink:0}
+.phone-wrap input{flex:1}
+
+/* Hint box */
+.hint-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--text-muted);line-height:1.5;display:flex;gap:10px}
+.hint-box .hint-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* BUTTONS */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;padding:14px 20px;transition:all .15s;width:100%}
 .btn:active{transform:scale(.98)}
 .btn-primary{background:var(--teal);color:#fff}
@@ -59,18 +84,20 @@ body{padding-bottom:80px}
 .btn-pdf{background:rgba(29,158,117,.12);color:var(--teal);border:1px solid rgba(29,158,117,.25)}
 .btn:disabled{opacity:.45;pointer-events:none}
 .btn-lg{padding:18px 20px;font-size:16px;font-weight:600;border-radius:16px}
+.btn-sm{padding:10px 16px;font-size:14px}
+.btn-link{background:none;border:none;color:var(--text-muted);font-size:13px;text-decoration:underline;cursor:pointer;font-family:'DM Sans',sans-serif;width:auto;padding:4px 0}
 
-/* ── CARD ── */
+/* CARD */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
 .card-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
 
-/* ── TIMER ── */
+/* TIMER */
 .timer-block{background:var(--teal-bg);border:1px solid rgba(29,158,117,.2);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:16px}
 .timer-value{font-family:'DM Mono',monospace;font-size:42px;font-weight:500;color:var(--teal);letter-spacing:-1px;line-height:1;margin-bottom:6px}
 .timer-label{font-size:12px;color:var(--text-muted)}
 .timer-start-time{font-size:13px;color:var(--text-muted);margin-top:8px}
 
-/* ── PHOTOS ── */
+/* PHOTOS */
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .photo-thumb{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;position:relative;background:var(--surface2);border:1px solid var(--border)}
 .photo-thumb img{width:100%;height:100%;object-fit:cover}
@@ -80,9 +107,8 @@ body{padding-bottom:80px}
 .photo-counter{font-size:12px;color:var(--text-muted);text-align:right;margin-bottom:8px}
 input[type=file]{display:none}
 
-/* ── INCIDENT ── */
+/* INCIDENT */
 .incident-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:12px}
-.incident-toggle span{font-size:14px;font-weight:500}
 .toggle-icon{font-size:18px;color:var(--red);transition:transform .2s}
 .toggle-icon.open{transform:rotate(45deg)}
 .incident-form{background:rgba(224,92,92,.04);border:1px solid rgba(224,92,92,.15);border-radius:var(--radius);padding:16px;display:none;flex-direction:column;gap:12px;margin-bottom:12px}
@@ -93,20 +119,17 @@ input[type=file]{display:none}
 .gravity-btn.selected-normale{background:rgba(224,154,60,.12);border-color:var(--orange);color:var(--orange)}
 .gravity-btn.selected-urgente{background:rgba(224,92,92,.12);border-color:var(--red);color:var(--red)}
 
-/* ── LOGEMENT LIST ── */
+/* LOGEMENT */
 .logement-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:border-color .15s}
 .logement-item:active{border-color:var(--teal)}
 .logement-item .name{font-size:15px;font-weight:500}
 .logement-item .addr{font-size:12px;color:var(--text-muted);margin-top:2px}
-.logement-item .arrow{color:var(--text-muted);font-size:18px}
 
-/* ── RECAP STAT ── */
+/* RECAP */
 .recap-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
 .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 12px;text-align:center}
 .stat-val{font-size:26px;font-weight:600;color:var(--teal);font-family:'DM Mono',monospace;letter-spacing:-1px}
 .stat-lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
-
-/* ── PRESTATION ROW ── */
 .prest-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px}
 .prest-row-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .prest-logement{font-size:14px;font-weight:600}
@@ -116,20 +139,17 @@ input[type=file]{display:none}
 .prest-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
 .badge-terminee{background:rgba(29,158,117,.15);color:var(--teal)}
 .badge-incident{background:rgba(224,92,92,.12);color:var(--red)}
-.prest-photo{font-size:12px;color:var(--text-muted)}
-
-/* ── PERIOD TABS ── */
 .period-row{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
 .period-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .period-btn.active{background:var(--teal-bg);border-color:rgba(29,158,117,.4);color:var(--teal)}
 
-/* ── MISC ── */
+/* MISC */
 .divider{height:1px;background:var(--border);margin:12px 0}
 .section-title{font-size:20px;font-weight:600;letter-spacing:-.4px;margin-bottom:6px}
 .section-sub{font-size:14px;color:var(--text-muted);margin-bottom:20px}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
 .badge-active{background:rgba(29,158,117,.15);color:var(--teal)}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 .empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px}
 .empty .icon{font-size:36px;margin-bottom:10px}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:500;padding:12px 20px;border-radius:30px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:999;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none}
@@ -148,8 +168,10 @@ input[type=file]{display:none}
 
 <div class="toast" id="toast"></div>
 
-<!-- ══ AUTH ══ -->
-<div id="screen-auth" class="screen active">
+<!-- ════════════════════════════════
+     SCREEN : CHOIX DU CANAL
+════════════════════════════════ -->
+<div id="screen-auth-choose" class="screen active">
   <div class="auth-wrap">
     <div class="auth-logo">
       <div class="mark">🧹</div>
@@ -157,22 +179,142 @@ input[type=file]{display:none}
       <p>Espace agent de ménage</p>
     </div>
     <div class="auth-card">
-      <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="votre@email.com" autocomplete="email"></div>
-      <div class="field"><label>Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"></div>
-      <button class="btn btn-primary btn-lg" id="btn-login">Se connecter</button>
+      <h2>Connexion</h2>
+      <p>Choisissez votre méthode de connexion</p>
+      <div class="channel-toggle">
+        <button class="ch-btn active" id="ch-email-btn" onclick="setChannel('email')">
+          ✉️ Email
+        </button>
+        <button class="ch-btn" id="ch-phone-btn" onclick="setChannel('phone')">
+          📱 Téléphone
+        </button>
+      </div>
+
+      <!-- Email -->
+      <div id="panel-email">
+        <div class="field">
+          <label>Adresse email</label>
+          <input type="email" id="auth-email" placeholder="votre@email.com" autocomplete="email">
+        </div>
+        <div class="hint-box">
+          <span class="hint-icon">💡</span>
+          <span>Un lien de connexion vous sera envoyé par email. Pas besoin de mot de passe.</span>
+        </div>
+        <button class="btn btn-primary btn-lg" id="btn-send-magic" style="margin-top:4px">
+          Recevoir le lien de connexion
+        </button>
+      </div>
+
+      <!-- Téléphone -->
+      <div id="panel-phone" style="display:none">
+        <div class="field">
+          <label>Numéro de téléphone</label>
+          <div class="phone-wrap">
+            <div class="country-prefix">🇫🇷 +33</div>
+            <input type="tel" id="auth-phone" placeholder="6 12 34 56 78" autocomplete="tel">
+          </div>
+        </div>
+        <div class="hint-box">
+          <span class="hint-icon">💡</span>
+          <span>Un code à 6 chiffres sera envoyé par SMS.</span>
+        </div>
+        <button class="btn btn-primary btn-lg" id="btn-send-otp" style="margin-top:4px">
+          Recevoir le code SMS
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══ HEADER (post-auth) ══ -->
-<div id="app-header" style="display:none">
-  <div class="app-header">
-    <div class="logo"><div class="logo-dot"></div>CleanSync</div>
-    <div style="font-size:12px;color:var(--text-muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border)" id="header-agent-name">Agent</div>
+<!-- ════════════════════════════════
+     SCREEN : VÉRIFICATION OTP SMS
+════════════════════════════════ -->
+<div id="screen-otp" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="mark">📱</div>
+      <h1>Code SMS</h1>
+      <p id="otp-hint-text">Entrez le code reçu par SMS</p>
+    </div>
+    <div class="auth-card">
+      <p style="text-align:center;font-size:14px;color:var(--text-muted)" id="otp-sub">Code envoyé au <strong id="otp-phone-display"></strong></p>
+      <div class="otp-row" id="otp-row">
+        <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <button class="btn btn-primary btn-lg" id="btn-verify-otp" disabled>Vérifier</button>
+      <div class="resend-row">
+        <button class="resend-btn" id="btn-resend" onclick="resendOTP()">Renvoyer le code</button>
+        <span id="resend-timer" style="display:none"> dans <span id="resend-countdown">60</span>s</span>
+      </div>
+      <button class="btn-link" onclick="showScreen('auth-choose')" style="text-align:center;margin-top:4px">← Retour</button>
+    </div>
   </div>
 </div>
 
-<!-- ══ BOTTOM NAV ══ -->
+<!-- ════════════════════════════════
+     SCREEN : MAGIC LINK ENVOYÉ
+════════════════════════════════ -->
+<div id="screen-magic-sent" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="mark">✉️</div>
+      <h1>Vérifiez vos emails</h1>
+      <p id="magic-sent-sub">Lien envoyé</p>
+    </div>
+    <div class="auth-card" style="gap:16px">
+      <div class="hint-box" style="flex-direction:column;gap:8px">
+        <div style="display:flex;gap:10px">
+          <span class="hint-icon">📩</span>
+          <span>Un lien de connexion a été envoyé à <strong id="magic-email-display"></strong>. Cliquez dessus pour accéder à votre espace.</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);padding-left:26px">Le lien est valide pendant 24h. Vérifiez aussi vos spams.</div>
+      </div>
+      <button class="btn btn-secondary" onclick="showScreen('auth-choose')">← Utiliser un autre moyen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SCREEN : PREMIÈRE CONNEXION
+     (compléter son profil)
+════════════════════════════════ -->
+<div id="screen-first-login" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="mark">👋</div>
+      <h1>Bienvenue !</h1>
+      <p>Complétez votre profil pour commencer</p>
+    </div>
+    <div class="auth-card">
+      <div class="field">
+        <label>Votre prénom et nom</label>
+        <input type="text" id="first-login-nom" placeholder="Marie Dupont" autocomplete="name">
+      </div>
+      <button class="btn btn-primary btn-lg" id="btn-complete-profile">
+        Accéder à mon espace →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     HEADER (post-auth)
+════════════════════════════════ -->
+<div id="app-header" style="display:none">
+  <div class="app-header">
+    <div class="logo"><div class="logo-dot"></div>CleanSync</div>
+    <div class="user-badge" id="header-agent-name">Agent</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     BOTTOM NAV
+════════════════════════════════ -->
 <div id="bottom-nav" style="display:none">
   <div class="bottom-nav">
     <div class="bnav-item active" id="bnav-new" onclick="gotoTab('logements','bnav-new')">
@@ -187,18 +329,25 @@ input[type=file]{display:none}
   </div>
 </div>
 
-<!-- ══ LOGEMENTS ══ -->
+<!-- ════════════════════════════════
+     SCREEN : LOGEMENTS
+════════════════════════════════ -->
 <div id="screen-logements" class="screen">
   <div class="section-title">Nouvelle prestation</div>
   <div class="section-sub">Sélectionnez votre logement</div>
   <div id="logements-list"></div>
 </div>
 
-<!-- ══ PRESTATION ══ -->
+<!-- ════════════════════════════════
+     SCREEN : PRESTATION
+════════════════════════════════ -->
 <div id="screen-prestation" class="screen">
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:13px;color:var(--text-muted);margin-bottom:2px">Logement</div><div style="font-size:17px;font-weight:600" id="prest-logement-name">—</div></div>
+      <div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:2px">Logement</div>
+        <div style="font-size:17px;font-weight:600" id="prest-logement-name">—</div>
+      </div>
       <span class="badge badge-active" id="prest-status-badge"><span class="badge-dot"></span>En attente</span>
     </div>
   </div>
@@ -219,7 +368,10 @@ input[type=file]{display:none}
   </div>
   <div class="card">
     <div class="card-title">⚠️ Incident (optionnel)</div>
-    <div class="incident-toggle" id="incident-toggle"><span>Déclarer un incident</span><span class="toggle-icon" id="toggle-icon">+</span></div>
+    <div class="incident-toggle" id="incident-toggle">
+      <span style="font-size:14px;font-weight:500">Déclarer un incident</span>
+      <span class="toggle-icon" id="toggle-icon">+</span>
+    </div>
     <div class="incident-form" id="incident-form">
       <div class="field"><label>Type d'incident</label>
         <select id="incident-type">
@@ -228,14 +380,16 @@ input[type=file]{display:none}
           <option value="equipement_casse">Équipement cassé</option>
           <option value="hygiene">Problème d'hygiène</option>
           <option value="autre">Autre</option>
-        </select></div>
+        </select>
+      </div>
       <div class="field"><label>Description</label><textarea id="incident-desc" placeholder="Décrivez l'incident..."></textarea></div>
       <div class="field"><label>Gravité</label>
         <div class="gravity-group">
           <button class="gravity-btn" data-val="faible" onclick="selectGravity('faible')">🟢 Faible</button>
           <button class="gravity-btn selected-normale" data-val="normale" onclick="selectGravity('normale')">🟠 Normale</button>
           <button class="gravity-btn" data-val="urgente" onclick="selectGravity('urgente')">🔴 Urgente</button>
-        </div></div>
+        </div>
+      </div>
       <div class="card-title" style="margin-bottom:8px">📷 Photos incident</div>
       <div class="photo-counter"><span id="photo-count-inc">0</span> / 10</div>
       <div class="photo-grid" id="photo-grid-inc"></div>
@@ -251,7 +405,9 @@ input[type=file]{display:none}
   <button class="btn btn-secondary" id="btn-cancel" style="margin-top:10px">Annuler</button>
 </div>
 
-<!-- ══ CONFIRMATION ══ -->
+<!-- ════════════════════════════════
+     SCREEN : CONFIRMATION
+════════════════════════════════ -->
 <div id="screen-confirm" class="screen">
   <div style="text-align:center;padding:40px 0 24px">
     <div style="font-size:56px;margin-bottom:16px">✅</div>
@@ -267,74 +423,71 @@ input[type=file]{display:none}
   <button class="btn btn-primary btn-lg" id="btn-new-prest" style="margin-top:16px">+ Nouvelle prestation</button>
 </div>
 
-<!-- ══ RÉCAP MENSUEL ══ -->
+<!-- ════════════════════════════════
+     SCREEN : RÉCAP
+════════════════════════════════ -->
 <div id="screen-recap" class="screen">
   <div class="section-title">Mon récapitulatif</div>
-  <div class="period-row" id="period-row">
+  <div class="period-row">
     <button class="period-btn active" data-months="1" onclick="selectRecapPeriod(this)">Ce mois</button>
     <button class="period-btn" data-months="3" onclick="selectRecapPeriod(this)">3 mois</button>
     <button class="period-btn" data-months="6" onclick="selectRecapPeriod(this)">6 mois</button>
     <button class="period-btn" data-months="12" onclick="selectRecapPeriod(this)">12 mois</button>
   </div>
-
-  <!-- KPIs -->
   <div class="recap-strip">
     <div class="stat-box"><div class="stat-val" id="rs-heures">—</div><div class="stat-lbl">Heures</div></div>
     <div class="stat-box"><div class="stat-val" id="rs-prest">—</div><div class="stat-lbl">Prestations</div></div>
     <div class="stat-box"><div class="stat-val" id="rs-inc" style="color:var(--red)">—</div><div class="stat-lbl">Incidents</div></div>
   </div>
-
-  <!-- Export PDF -->
-  <button class="btn btn-pdf" id="btn-export-pdf" style="margin-bottom:16px">
-    ⬇ Exporter en PDF
-  </button>
-
-  <!-- Liste prestations -->
+  <button class="btn btn-pdf" id="btn-export-pdf" style="margin-bottom:16px">⬇ Exporter en PDF</button>
   <div class="card-title" style="padding:0;margin-bottom:10px">Détail des prestations</div>
-  <div id="recap-prest-list">
-    <div class="empty"><div class="icon">⏳</div>Chargement...</div>
-  </div>
+  <div id="recap-prest-list"><div class="empty"><div class="icon">⏳</div>Chargement...</div></div>
 </div>
 
 <script>
-// ══════════════════════════
+// ══════════════════════════════════
 // CONFIG
-// ══════════════════════════
+// ══════════════════════════════════
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY = 'REMPLACER_PAR_VOTRE_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ══════════════════════════
+// ══════════════════════════════════
 // STATE
-// ══════════════════════════
+// ══════════════════════════════════
 let currentUser=null, currentAgent=null, currentLogement=null, currentPrestation=null;
 let timerInterval=null, startTime=null;
 let photosPrest=[], photosInc=[];
 let graviteSelected='normale', incidentOpen=false;
 let recapPeriodMonths=1, recapData=[];
+let authChannel='email'; // 'email' | 'phone'
+let pendingPhone=''; // numéro en attente de vérif OTP
+let resendTimer=null;
 
-// ══════════════════════════
+// ══════════════════════════════════
 // UTILS
-// ══════════════════════════
-const fmtTime = dt => dt ? new Date(dt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '—';
-const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
-const fmtDuree = min => { if(!min) return '—'; const h=Math.floor(min/60),m=min%60; return h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`; };
-const fmtDuration = ms => { const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; };
-const fmtMois = iso => iso ? new Date(iso).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) : '—';
-const minsToDuration = min => { if(!min) return '—'; const h=Math.floor(min/60),m=min%60; return h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`; };
-const typeLabel = t => ({degat:'Dégât matériel',equipement_manquant:'Équip. manquant',equipement_casse:'Équip. cassé',hygiene:'Hygiène',autre:'Autre'})[t]||t;
+// ══════════════════════════════════
+const fmtTime=dt=>dt?new Date(dt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—';
+const fmtDate=dt=>dt?new Date(dt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+const fmtDuree=min=>{if(!min)return'—';const h=Math.floor(min/60),m=min%60;return h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`};
+const fmtDuration=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`};
+const minsToDuration=min=>{if(!min)return'—';const h=Math.floor(min/60),m=min%60;return h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`};
 
-function toast(msg, type=''){
+function toast(msg,type=''){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show '+type;
+  t.textContent=msg;t.className='toast show '+type;
   setTimeout(()=>t.className='toast',2800);
 }
-
-function showScreen(id) {
+function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
 }
-function gotoTab(screen, bnavId) {
+function showApp(){
+  document.getElementById('app-header').style.display='block';
+  document.getElementById('bottom-nav').style.display='block';
+  document.getElementById('header-agent-name').textContent=currentAgent.nom;
+}
+function gotoTab(screen,bnavId){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById(bnavId).classList.add('active');
   if(screen==='logements') loadLogements();
@@ -342,62 +495,195 @@ function gotoTab(screen, bnavId) {
   showScreen(screen);
 }
 
-// ══════════════════════════
-// AUTH
-// ══════════════════════════
-document.getElementById('btn-login').addEventListener('click', async () => {
+// ══════════════════════════════════
+// CANAL : EMAIL / TÉLÉPHONE
+// ══════════════════════════════════
+function setChannel(ch){
+  authChannel=ch;
+  document.getElementById('ch-email-btn').classList.toggle('active',ch==='email');
+  document.getElementById('ch-phone-btn').classList.toggle('active',ch==='phone');
+  document.getElementById('panel-email').style.display=ch==='email'?'block':'none';
+  document.getElementById('panel-phone').style.display=ch==='phone'?'block':'none';
+}
+
+// ══════════════════════════════════
+// MAGIC LINK EMAIL
+// ══════════════════════════════════
+document.getElementById('btn-send-magic').addEventListener('click', async () => {
   const email=document.getElementById('auth-email').value.trim();
-  const pwd=document.getElementById('auth-password').value;
-  if(!email||!pwd){toast('Renseignez email et mot de passe','error');return;}
-  const btn=document.getElementById('btn-login');
+  if(!email){toast('Entrez votre email','error');return;}
+  const btn=document.getElementById('btn-send-magic');
   btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pwd});
-  if(error){toast('Identifiants incorrects','error');btn.innerHTML='Se connecter';btn.disabled=false;return;}
-  currentUser=data.user;
-  await loadAgent();
+
+  const {error}=await sb.auth.signInWithOtp({
+    email,
+    options:{
+      emailRedirectTo: window.location.href,
+      data:{role:'agent'}
+    }
+  });
+
+  if(error){toast('Erreur : '+error.message,'error');btn.innerHTML='Recevoir le lien de connexion';btn.disabled=false;return;}
+  document.getElementById('magic-email-display').textContent=email;
+  document.getElementById('magic-sent-sub').textContent=`Email envoyé à ${email}`;
+  showScreen('magic-sent');
 });
 
-async function loadAgent() {
-  const {data,error}=await sb.from('agents').select('*').eq('user_id',currentUser.id).single();
-  if(error||!data){toast('Profil agent introuvable','error');await sb.auth.signOut();document.getElementById('btn-login').innerHTML='Se connecter';document.getElementById('btn-login').disabled=false;return;}
-  currentAgent=data;
-  document.getElementById('header-agent-name').textContent=currentAgent.nom;
-  document.getElementById('app-header').style.display='block';
-  document.getElementById('bottom-nav').style.display='block';
-  await loadLogements();
+// ══════════════════════════════════
+// OTP SMS
+// ══════════════════════════════════
+document.getElementById('btn-send-otp').addEventListener('click', async () => {
+  let raw=document.getElementById('auth-phone').value.replace(/\s/g,'');
+  if(!raw){toast('Entrez votre numéro','error');return;}
+  // Normaliser : 06... → +336...
+  if(raw.startsWith('0')) raw='+33'+raw.slice(1);
+  if(!raw.startsWith('+')) raw='+33'+raw;
+  pendingPhone=raw;
+
+  const btn=document.getElementById('btn-send-otp');
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+
+  const {error}=await sb.auth.signInWithOtp({phone:pendingPhone});
+  if(error){toast('Erreur : '+error.message,'error');btn.innerHTML='Recevoir le code SMS';btn.disabled=false;return;}
+
+  document.getElementById('otp-phone-display').textContent=pendingPhone;
+  setupOTPInputs();
+  showScreen('otp');
+  startResendTimer();
+  btn.innerHTML='Recevoir le code SMS'; btn.disabled=false;
+});
+
+function setupOTPInputs(){
+  const digits=document.querySelectorAll('.otp-digit');
+  digits.forEach((d,i)=>{
+    d.value='';
+    d.addEventListener('input',e=>{
+      e.target.value=e.target.value.replace(/[^0-9]/g,'').slice(-1);
+      if(e.target.value&&i<digits.length-1) digits[i+1].focus();
+      checkOTPReady();
+    });
+    d.addEventListener('keydown',e=>{
+      if(e.key==='Backspace'&&!d.value&&i>0) digits[i-1].focus();
+    });
+  });
+  digits[0].focus();
+}
+
+function checkOTPReady(){
+  const digits=document.querySelectorAll('.otp-digit');
+  const code=[...digits].map(d=>d.value).join('');
+  document.getElementById('btn-verify-otp').disabled=code.length<6;
+}
+
+document.getElementById('btn-verify-otp').addEventListener('click', async () => {
+  const digits=document.querySelectorAll('.otp-digit');
+  const code=[...digits].map(d=>d.value).join('');
+  const btn=document.getElementById('btn-verify-otp');
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+
+  const {data,error}=await sb.auth.verifyOtp({phone:pendingPhone,token:code,type:'sms'});
+  if(error){toast('Code incorrect ou expiré','error');btn.innerHTML='Vérifier';btn.disabled=false;return;}
+  currentUser=data.user;
+  await handlePostAuth();
+});
+
+async function resendOTP(){
+  const {error}=await sb.auth.signInWithOtp({phone:pendingPhone});
+  if(error){toast('Erreur renvoi','error');return;}
+  toast('Code renvoyé ✓','success');
+  startResendTimer();
+}
+
+function startResendTimer(){
+  let sec=60;
+  const btn=document.getElementById('btn-resend');
+  const timerEl=document.getElementById('resend-timer');
+  const countEl=document.getElementById('resend-countdown');
+  btn.disabled=true; timerEl.style.display='inline';
+  if(resendTimer) clearInterval(resendTimer);
+  resendTimer=setInterval(()=>{
+    sec--;
+    countEl.textContent=sec;
+    if(sec<=0){clearInterval(resendTimer);btn.disabled=false;timerEl.style.display='none';}
+  },1000);
+}
+
+// ══════════════════════════════════
+// POST-AUTH : profil + onboarding
+// ══════════════════════════════════
+async function handlePostAuth(){
+  // Charger ou créer le profil agent
+  const {data,error}=await sb.rpc('get_or_create_agent_profile',{
+    p_user_id: currentUser.id,
+    p_email: currentUser.email||null,
+    p_telephone: currentUser.phone||null
+  });
+
+  if(error||!data?.length){
+    // Profil introuvable → pas encore agent invité
+    toast('Compte non trouvé. Contactez votre gestionnaire.','error');
+    await sb.auth.signOut(); showScreen('auth-choose'); return;
+  }
+
+  const profile=data[0];
+  if(!profile.actif){toast('Compte désactivé. Contactez votre gestionnaire.','error');await sb.auth.signOut();showScreen('auth-choose');return;}
+
+  currentAgent=profile;
+
+  // Première connexion ? → compléter le profil
+  const isDefaultName = !profile.nom || profile.nom==='Agent' || profile.nom===currentUser.email?.split('@')[0];
+  if(profile.is_new||isDefaultName){
+    showScreen('first-login');
+    return;
+  }
+
+  enterApp();
+}
+
+document.getElementById('btn-complete-profile').addEventListener('click', async () => {
+  const nom=document.getElementById('first-login-nom').value.trim();
+  if(!nom||nom.length<2){toast('Entrez votre nom complet','error');return;}
+  const btn=document.getElementById('btn-complete-profile');
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+
+  await sb.from('agents').update({nom}).eq('id',currentAgent.id);
+  currentAgent.nom=nom;
+  enterApp();
+});
+
+function enterApp(){
+  showApp();
+  loadLogements();
 }
 
 async function logout(){await sb.auth.signOut();location.reload();}
 
-// ══════════════════════════
+// ══════════════════════════════════
 // LOGEMENTS
-// ══════════════════════════
-async function loadLogements() {
+// ══════════════════════════════════
+async function loadLogements(){
   showScreen('logements');
   const list=document.getElementById('logements-list');
   list.innerHTML='<div class="empty"><div class="icon">⏳</div>Chargement...</div>';
-  // Charger uniquement les logements assignés à cet agent
-  const {data,error}=await sb.from('agent_logements')
-    .select('logements(id,nom,adresse)')
-    .eq('agent_id',currentAgent.id);
+  const {data,error}=await sb.from('agent_logements').select('logements(id,nom,adresse)').eq('agent_id',currentAgent.id);
   const logements=(data||[]).map(x=>x.logements).filter(Boolean);
   if(error||!logements.length){list.innerHTML='<div class="empty"><div class="icon">🏠</div>Aucun logement assigné</div>';return;}
   list.innerHTML='';
   logements.forEach(l=>{
     const el=document.createElement('div');
     el.className='logement-item';
-    el.innerHTML=`<div><div class="name">${l.nom||'—'}</div><div class="addr">${l.adresse||''}</div></div><span class="arrow">›</span>`;
+    el.innerHTML=`<div><div class="name">${l.nom||'—'}</div><div class="addr">${l.adresse||''}</div></div><span style="color:var(--text-muted);font-size:18px">›</span>`;
     el.addEventListener('click',()=>startPrestation(l));
     list.appendChild(el);
   });
 }
 
-// ══════════════════════════
+// ══════════════════════════════════
 // PRESTATION
-// ══════════════════════════
-function startPrestation(logement) {
-  currentLogement=logement; currentPrestation=null;
-  photosPrest=[]; photosInc=[]; graviteSelected='normale'; incidentOpen=false;
+// ══════════════════════════════════
+function startPrestation(logement){
+  currentLogement=logement;currentPrestation=null;
+  photosPrest=[];photosInc=[];graviteSelected='normale';incidentOpen=false;
   document.getElementById('prest-logement-name').textContent=logement.nom;
   document.getElementById('prest-notes').value='';
   document.getElementById('incident-desc').value='';
@@ -410,18 +696,17 @@ function startPrestation(logement) {
   document.getElementById('btn-submit').disabled=true;
   document.getElementById('prest-status-badge').className='badge badge-active';
   document.getElementById('prest-status-badge').innerHTML='<span class="badge-dot"></span>En attente';
-  renderPhotoGrid('prest'); renderPhotoGrid('inc'); selectGravity('normale');
-  if(timerInterval) clearInterval(timerInterval);
-  startTime=null;
+  renderPhotoGrid('prest');renderPhotoGrid('inc');selectGravity('normale');
+  if(timerInterval)clearInterval(timerInterval);startTime=null;
   showScreen('prestation');
 }
 
-document.getElementById('btn-start').addEventListener('click', async () => {
+document.getElementById('btn-start').addEventListener('click',async()=>{
   const btn=document.getElementById('btn-start');
-  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
   startTime=new Date();
   const {data,error}=await sb.from('prestations').insert({logement_id:currentLogement.id,agent_id:currentAgent.id,heure_debut:startTime.toISOString(),statut:'en_cours'}).select().single();
-  if(error){toast('Erreur lors du démarrage','error');btn.innerHTML='▶ Démarrer';btn.disabled=false;return;}
+  if(error){toast('Erreur démarrage','error');btn.innerHTML='▶ Démarrer';btn.disabled=false;return;}
   currentPrestation=data;
   document.getElementById('btn-start-wrap').style.display='none';
   document.getElementById('btn-finish-wrap').style.display='block';
@@ -440,44 +725,40 @@ document.getElementById('btn-finish').addEventListener('click',()=>{
   toast('Validez la prestation');
 });
 
-// ══════════════════════════
+// ══════════════════════════════════
 // PHOTOS
-// ══════════════════════════
-function renderPhotoGrid(type) {
+// ══════════════════════════════════
+function renderPhotoGrid(type){
   const photos=type==='prest'?photosPrest:photosInc;
   const grid=document.getElementById('photo-grid-'+type);
-  const counter=document.getElementById('photo-count-'+type);
   const max=type==='prest'?15:10;
   grid.innerHTML='';
   photos.forEach((p,i)=>{
-    const thumb=document.createElement('div');
-    thumb.className='photo-thumb';
+    const thumb=document.createElement('div');thumb.className='photo-thumb';
     thumb.innerHTML=`<img src="${p.preview}"><button class="remove-btn" onclick="removePhoto('${type}',${i})">×</button>`;
     grid.appendChild(thumb);
   });
   if(photos.length<max){
-    const add=document.createElement('div');
-    add.className='photo-add';
+    const add=document.createElement('div');add.className='photo-add';
     add.innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Photo</span>`;
     add.onclick=()=>document.getElementById('file-input-'+type).click();
     grid.appendChild(add);
   }
-  counter.textContent=photos.length;
+  document.getElementById('photo-count-'+type).textContent=photos.length;
 }
-function removePhoto(type,index){(type==='prest'?photosPrest:photosInc).splice(index,1);renderPhotoGrid(type);}
+function removePhoto(type,idx){(type==='prest'?photosPrest:photosInc).splice(idx,1);renderPhotoGrid(type);}
 function setupFileInput(type){
   document.getElementById('file-input-'+type).addEventListener('change',async e=>{
-    const files=Array.from(e.target.files);
     const arr=type==='prest'?photosPrest:photosInc;
     const max=type==='prest'?15:10;
-    for(const file of files.slice(0,max-arr.length)){
-      const preview=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});
+    for(const file of Array.from(e.target.files).slice(0,max-arr.length)){
+      const preview=await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(file);});
       arr.push({file,preview});
     }
-    renderPhotoGrid(type); e.target.value='';
+    renderPhotoGrid(type);e.target.value='';
   });
 }
-setupFileInput('prest'); setupFileInput('inc');
+setupFileInput('prest');setupFileInput('inc');
 
 document.getElementById('incident-toggle').addEventListener('click',()=>{
   incidentOpen=!incidentOpen;
@@ -489,243 +770,133 @@ function selectGravity(val){
   document.querySelectorAll('.gravity-btn').forEach(b=>{b.className='gravity-btn';if(b.dataset.val===val)b.classList.add('selected-'+val);});
 }
 
-// ══════════════════════════
+// ══════════════════════════════════
 // SUBMIT
-// ══════════════════════════
-document.getElementById('btn-submit').addEventListener('click', async () => {
+// ══════════════════════════════════
+document.getElementById('btn-submit').addEventListener('click',async()=>{
   const btn=document.getElementById('btn-submit');
-  btn.innerHTML='<span class="spinner"></span> Envoi...'; btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Envoi...';btn.disabled=true;
   const endTime=new Date();
   const notes=document.getElementById('prest-notes').value.trim();
   const hasInc=incidentOpen&&document.getElementById('incident-desc').value.trim();
-  try {
+  try{
     await sb.from('prestations').update({heure_fin:endTime.toISOString(),statut:hasInc?'incident':'terminee',notes:notes||null}).eq('id',currentPrestation.id);
     for(let i=0;i<photosPrest.length;i++){
-      const p=photosPrest[i];
-      const path=`${currentPrestation.id}/prest_${i}_${Date.now()}.jpg`;
-      const {error:upErr}=await sb.storage.from('prestations-photos').upload(path,p.file);
-      if(!upErr) await sb.from('photos_prestation').insert({prestation_id:currentPrestation.id,storage_path:path,type:'prestation',ordre:i});
+      const p=photosPrest[i];const path=`${currentPrestation.id}/prest_${i}_${Date.now()}.jpg`;
+      const {error:ue}=await sb.storage.from('prestations-photos').upload(path,p.file);
+      if(!ue) await sb.from('photos_prestation').insert({prestation_id:currentPrestation.id,storage_path:path,type:'prestation',ordre:i});
     }
     if(hasInc){
       const {data:inc}=await sb.from('incidents').insert({prestation_id:currentPrestation.id,type_incident:document.getElementById('incident-type').value,description:document.getElementById('incident-desc').value.trim(),gravite:graviteSelected}).select().single();
       if(inc) for(let i=0;i<photosInc.length;i++){
-        const p=photosInc[i];
-        const path=`${currentPrestation.id}/inc_${i}_${Date.now()}.jpg`;
-        const {error:upErr}=await sb.storage.from('prestations-photos').upload(path,p.file);
-        if(!upErr) await sb.from('photos_prestation').insert({prestation_id:currentPrestation.id,storage_path:path,type:'incident',ordre:i});
+        const p=photosInc[i];const path=`${currentPrestation.id}/inc_${i}_${Date.now()}.jpg`;
+        const {error:ue}=await sb.storage.from('prestations-photos').upload(path,p.file);
+        if(!ue) await sb.from('photos_prestation').insert({prestation_id:currentPrestation.id,storage_path:path,type:'incident',ordre:i});
       }
     }
-    const dureeMin=Math.round((endTime-startTime)/60000);
+    const dm=Math.round((endTime-startTime)/60000);
     document.getElementById('conf-logement').textContent=currentLogement.nom;
-    document.getElementById('conf-duree').textContent=minsToDuration(dureeMin);
+    document.getElementById('conf-duree').textContent=minsToDuration(dm);
     document.getElementById('conf-photos').textContent=photosPrest.length+' photo(s)';
     document.getElementById('conf-incident').textContent=hasInc?'⚠️ Déclaré':'Aucun';
-    document.getElementById('confirm-summary').textContent=`${fmtTime(startTime)} → ${fmtTime(endTime)} · ${minsToDuration(dureeMin)}`;
+    document.getElementById('confirm-summary').textContent=`${fmtTime(startTime)} → ${fmtTime(endTime)} · ${minsToDuration(dm)}`;
     showScreen('confirm');
-  } catch(err){toast('Erreur lors de la validation','error');btn.innerHTML='✓ Valider';btn.disabled=false;}
+  }catch(e){toast('Erreur validation','error');btn.innerHTML='✓ Valider';btn.disabled=false;}
 });
 document.getElementById('btn-cancel').addEventListener('click',()=>{if(timerInterval)clearInterval(timerInterval);showScreen('logements');});
 document.getElementById('btn-new-prest').addEventListener('click',()=>{gotoTab('logements','bnav-new');});
 
-// ══════════════════════════
+// ══════════════════════════════════
 // RÉCAP
-// ══════════════════════════
-async function loadRecap() {
+// ══════════════════════════════════
+async function loadRecap(){
   showScreen('recap');
   document.getElementById('recap-prest-list').innerHTML='<div class="empty"><div class="icon">⏳</div>Chargement...</div>';
-  const since=new Date(); since.setMonth(since.getMonth()-recapPeriodMonths);
-
-  const {data:prestations}=await sb.from('v_prestations')
-    .select('*')
-    .eq('agent_id',currentAgent.id)
-    .gte('heure_debut',since.toISOString())
-    .in('statut',['terminee','incident'])
-    .order('heure_debut',{ascending:false});
-
-  recapData=prestations||[];
+  const since=new Date();since.setMonth(since.getMonth()-recapPeriodMonths);
+  const {data}=await sb.from('v_prestations').select('*').eq('agent_id',currentAgent.id).gte('heure_debut',since.toISOString()).in('statut',['terminee','incident']).order('heure_debut',{ascending:false});
+  recapData=data||[];
   const totalMin=recapData.reduce((s,p)=>s+(p.duree_minutes||0),0);
-  const totalH=(totalMin/60).toFixed(1);
-  const nbInc=recapData.filter(p=>p.statut==='incident').length;
-
-  document.getElementById('rs-heures').textContent=totalH+'h';
+  document.getElementById('rs-heures').textContent=(totalMin/60).toFixed(1)+'h';
   document.getElementById('rs-prest').textContent=recapData.length;
-  document.getElementById('rs-inc').textContent=nbInc;
-
-  if(!recapData.length){document.getElementById('recap-prest-list').innerHTML='<div class="empty"><div class="icon">📋</div>Aucune prestation sur cette période</div>';return;}
-
+  document.getElementById('rs-inc').textContent=recapData.filter(p=>p.statut==='incident').length;
+  if(!recapData.length){document.getElementById('recap-prest-list').innerHTML='<div class="empty"><div class="icon">📋</div>Aucune prestation</div>';return;}
   document.getElementById('recap-prest-list').innerHTML='';
   recapData.forEach(p=>{
-    const div=document.createElement('div');
-    div.className='prest-row';
-    div.innerHTML=`
-      <div class="prest-row-top">
-        <span class="prest-logement">${p.logement_nom||'—'}</span>
-        <span class="prest-date">${fmtDate(p.heure_debut)}</span>
-      </div>
+    const div=document.createElement('div');div.className='prest-row';
+    div.innerHTML=`<div class="prest-row-top"><span class="prest-logement">${p.logement_nom||'—'}</span><span class="prest-date">${fmtDate(p.heure_debut)}</span></div>
       <div class="prest-row-bottom">
         <span class="prest-duree">${fmtDuree(p.duree_minutes)}</span>
         <span class="prest-badge badge-${p.statut}">${p.statut==='incident'?'⚠️ Incident':'✓ Terminée'}</span>
-        ${p.nb_photos>0?`<span class="prest-photo">📷 ${p.nb_photos}</span>`:''}
+        ${p.nb_photos>0?`<span style="font-size:12px;color:var(--text-muted)">📷 ${p.nb_photos}</span>`:''}
         <span style="font-size:12px;color:var(--text-muted);margin-left:auto">${fmtTime(p.heure_debut)} → ${fmtTime(p.heure_fin)}</span>
       </div>
       ${p.notes?`<div style="font-size:12px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${p.notes}</div>`:''}`;
     document.getElementById('recap-prest-list').appendChild(div);
   });
 }
-
 function selectRecapPeriod(btn){
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); recapPeriodMonths=parseInt(btn.dataset.months);
-  loadRecap();
+  btn.classList.add('active');recapPeriodMonths=parseInt(btn.dataset.months);loadRecap();
 }
 
-// ══════════════════════════
-// EXPORT PDF
-// ══════════════════════════
-document.getElementById('btn-export-pdf').addEventListener('click', () => {
-  if(!recapData.length){toast('Aucune donnée à exporter','error');return;}
-  generatePDF();
+// ══════════════════════════════════
+// PDF
+// ══════════════════════════════════
+document.getElementById('btn-export-pdf').addEventListener('click',()=>{
+  if(!recapData.length){toast('Aucune donnée','error');return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const T=[29,158,117],D=[26,26,24],M=[120,130,122],W=210;
+  doc.setFillColor(...T);doc.rect(0,0,W,32,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('CleanSync',14,14);
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Récapitulatif — '+currentAgent.nom,14,22);
+  doc.setFontSize(9);const now=new Date();doc.text(`Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,14,29);
+  let y=44;
+  doc.setFillColor(245,244,240);doc.roundedRect(14,y-6,W-28,18,3,3,'F');
+  doc.setTextColor(...D);doc.setFont('helvetica','bold');doc.setFontSize(10);
+  doc.text(`Agent : ${currentAgent.nom}  ·  Période : ${recapPeriodMonths===1?'Ce mois':recapPeriodMonths+' derniers mois'}`,20,y+4);
+  y=72;
+  const totalMin=recapData.reduce((s,p)=>s+(p.duree_minutes||0),0);
+  const kpis=[{l:'Prestations',v:String(recapData.length)},{l:'Heures',v:(totalMin/60).toFixed(1)+'h'},{l:'Incidents',v:String(recapData.filter(p=>p.statut==='incident').length)},{l:'Logements',v:String(new Set(recapData.map(p=>p.logement_id)).size)}];
+  const kW=(W-28-9)/4;
+  kpis.forEach((k,i)=>{
+    const x=14+i*(kW+3);
+    doc.setFillColor(255,255,255);doc.setDrawColor(...T);doc.setLineWidth(0.3);doc.roundedRect(x,y-6,kW,18,2,2,'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(...T);doc.text(k.v,x+kW/2,y+4,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...M);doc.text(k.l,x+kW/2,y+10,{align:'center'});
+  });
+  doc.autoTable({
+    startY:100,
+    head:[['Date','Logement','Horaires','Durée','Statut','Notes']],
+    body:recapData.map(p=>[fmtDate(p.heure_debut),p.logement_nom||'—',`${fmtTime(p.heure_debut)} → ${fmtTime(p.heure_fin)}`,fmtDuree(p.duree_minutes),p.statut==='incident'?'Incident':'Terminée',p.notes?p.notes.slice(0,30):'—']),
+    styles:{font:'helvetica',fontSize:8.5,cellPadding:3,textColor:D},
+    headStyles:{fillColor:T,textColor:[255,255,255],fontStyle:'bold',fontSize:8},
+    alternateRowStyles:{fillColor:[250,250,248]},
+    columnStyles:{0:{cellWidth:22},1:{cellWidth:42},2:{cellWidth:32},3:{cellWidth:18,halign:'center'},4:{cellWidth:22,halign:'center'},5:{cellWidth:'auto'}},
+    didParseCell:data=>{if(data.section==='body'&&data.column.index===4)data.cell.styles.textColor=data.cell.raw==='Incident'?[224,92,92]:[29,158,117];}
+  });
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(...M);doc.text(`CleanSync — Confidentiel — Page ${i}/${pages}`,W/2,290,{align:'center'});doc.setDrawColor(...T);doc.setLineWidth(0.3);doc.line(14,286,W-14,286);}
+  doc.save(`CleanSync_${currentAgent.nom.replace(' ','_')}_${new Date().toLocaleDateString('fr-FR',{month:'2-digit',year:'numeric'}).replace('/','_')}.pdf`);
+  toast('PDF généré ✓','success');
 });
 
-function generatePDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'a4' });
-
-  const TEAL = [29, 158, 117];
-  const DARK = [26, 26, 24];
-  const MUTED = [120, 130, 122];
-  const LIGHT_BG = [245, 244, 240];
-  const W = 210;
-
-  // ── En-tête ──
-  doc.setFillColor(...TEAL);
-  doc.rect(0, 0, W, 32, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('CleanSync', 14, 14);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('Récapitulatif mensuel des prestations', 14, 22);
-  doc.setFontSize(9);
-  const now = new Date();
-  doc.text(`Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`, 14, 29);
-
-  // ── Infos agent ──
-  let y = 44;
-  doc.setFillColor(...LIGHT_BG);
-  doc.roundedRect(14, y-6, W-28, 22, 3, 3, 'F');
-  doc.setTextColor(...DARK);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text(`Agent : ${currentAgent.nom}`, 20, y+2);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  const periodLabel = recapPeriodMonths === 1 ? 'Ce mois' : `${recapPeriodMonths} derniers mois`;
-  doc.text(`Période : ${periodLabel}  ·  Email : ${currentAgent.email||'—'}`, 20, y+9);
-
-  // ── KPIs ──
-  y = 80;
-  const totalMin = recapData.reduce((s,p)=>s+(p.duree_minutes||0),0);
-  const totalH = (totalMin/60).toFixed(1);
-  const nbInc = recapData.filter(p=>p.statut==='incident').length;
-  const kpis = [
-    { label: 'Prestations', value: String(recapData.length) },
-    { label: 'Heures totales', value: totalH + 'h' },
-    { label: 'Incidents déclarés', value: String(nbInc) },
-    { label: 'Logements distincts', value: String(new Set(recapData.map(p=>p.logement_id)).size) },
-  ];
-  const kW = (W-28-9) / 4;
-  kpis.forEach((k,i) => {
-    const x = 14 + i*(kW+3);
-    doc.setFillColor(255,255,255);
-    doc.setDrawColor(...TEAL);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(x, y-6, kW, 20, 2, 2, 'FD');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(16);
-    doc.setTextColor(...TEAL);
-    doc.text(k.value, x+kW/2, y+5, {align:'center'});
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...MUTED);
-    doc.text(k.label, x+kW/2, y+11, {align:'center'});
-  });
-
-  // ── Tableau des prestations ──
-  y = 112;
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.setTextColor(...DARK);
-  doc.text('Détail des prestations', 14, y);
-  y += 6;
-
-  const rows = recapData.map(p => [
-    fmtDate(p.heure_debut),
-    p.logement_nom || '—',
-    `${fmtTime(p.heure_debut)} → ${fmtTime(p.heure_fin)}`,
-    fmtDuree(p.duree_minutes),
-    p.statut === 'incident' ? 'Incident' : 'Terminée',
-    p.nb_photos > 0 ? String(p.nb_photos) : '—',
-    p.notes ? (p.notes.length > 30 ? p.notes.slice(0,28)+'…' : p.notes) : '—',
-  ]);
-
-  doc.autoTable({
-    startY: y,
-    head: [['Date','Logement','Horaires','Durée','Statut','Photos','Notes']],
-    body: rows,
-    styles: { font:'helvetica', fontSize:8.5, cellPadding:3, textColor:DARK },
-    headStyles: { fillColor:TEAL, textColor:[255,255,255], fontStyle:'bold', fontSize:8 },
-    alternateRowStyles: { fillColor:[250,250,248] },
-    columnStyles: {
-      0: { cellWidth:22 },
-      1: { cellWidth:38 },
-      2: { cellWidth:32 },
-      3: { cellWidth:18, halign:'center' },
-      4: { cellWidth:22, halign:'center' },
-      5: { cellWidth:14, halign:'center' },
-      6: { cellWidth:'auto' },
-    },
-    didDrawCell: (data) => {
-      if(data.section==='body' && data.column.index===4) {
-        const val = data.cell.raw;
-        if(val==='Incident') { doc.setTextColor(224,92,92); }
-        else { doc.setTextColor(29,158,117); }
-      }
-    },
-    didParseCell: (data) => {
-      if(data.section==='body' && data.column.index===4) {
-        if(data.cell.raw==='Incident') data.cell.styles.textColor=[224,92,92];
-        else data.cell.styles.textColor=[29,158,117];
-      }
-    },
-  });
-
-  // ── Pied de page ──
-  const pageCount = doc.internal.getNumberOfPages();
-  for(let i=1;i<=pageCount;i++){
-    doc.setPage(i);
-    doc.setFontSize(8); doc.setTextColor(...MUTED);
-    doc.text(`CleanSync — Document confidentiel — Page ${i}/${pageCount}`, W/2, 290, {align:'center'});
-    doc.setDrawColor(...TEAL); doc.setLineWidth(0.3);
-    doc.line(14, 286, W-14, 286);
-  }
-
-  const moisLabel = new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).replace(' ','-');
-  doc.save(`CleanSync_recap_${currentAgent.nom.replace(' ','_')}_${moisLabel}.pdf`);
-  toast('PDF généré ✓','success');
-}
-
-// ══════════════════════════
-// SESSION
-// ══════════════════════════
-(async()=>{
-  const { data:{session} } = await sb.auth.getSession();
-  if(session){
+// ══════════════════════════════════
+// GESTION MAGIC LINK (retour URL)
+// ══════════════════════════════════
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session&&!currentUser){
     currentUser=session.user;
-    await loadAgent();
+    await handlePostAuth();
   }
+});
+
+// ══════════════════════════════════
+// SESSION EXISTANTE
+// ══════════════════════════════════
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){currentUser=session.user;await handlePostAuth();}
 })();
 </script>
 </body>
