@@ -449,7 +449,7 @@ input[type=file]{display:none}
 // CONFIG
 // ══════════════════════════════════
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+const SUPABASE_ANON_KEY = 'REMPLACER_PAR_VOTRE_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ══════════════════════════════════
@@ -882,41 +882,28 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 });
 
 // ══════════════════════════════════
-// GESTION MAGIC LINK (retour URL)
-// ══════════════════════════════════
-sb.auth.onAuthStateChange(async(event,session)=>{
-  if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session&&!currentUser){
-    currentUser=session.user;
-    await handlePostAuth();
-  }
-});
-// ══════════════════════════════════
-// SESSION EXISTANTE + HASH TOKEN
+// INIT : SESSION + MAGIC LINK HASH
 // ══════════════════════════════════
 (async()=>{
-  // 1. Traiter le hash d'invitation/magic link dans l'URL
+  // Laisser Supabase processer le hash (#access_token=...)
   const hash = window.location.hash;
-  if(hash && hash.includes('access_token')) {
-    // Supabase lit le hash automatiquement via getSession()
-    // On lui laisse 800ms pour processer
-    await new Promise(r => setTimeout(r, 800));
+  if(hash && hash.includes('access_token')){
+    await new Promise(r => setTimeout(r, 1000));
   }
 
-  // 2. Vérifier la session
-  const {data:{session}}=await sb.auth.getSession();
-  if(session){
-    currentUser=session.user;
-    // Nettoyer l'URL (enlever le hash)
+  // Vérifier session
+  const {data:{session}} = await sb.auth.getSession();
+  if(session && !currentUser){
+    currentUser = session.user;
     window.history.replaceState(null, '', window.location.pathname);
     await handlePostAuth();
     return;
   }
 
-  // 3. Si pas de session, écouter l'événement Auth
-  // (couvre le cas où Supabase traite le hash en async)
-  sb.auth.onAuthStateChange(async(event,session)=>{
-    if((event==='SIGNED_IN')&&session&&!currentUser){
-      currentUser=session.user;
+  // Écouter les changements Auth (magic link traité en async)
+  sb.auth.onAuthStateChange(async(event, session)=>{
+    if(event==='SIGNED_IN' && session && !currentUser){
+      currentUser = session.user;
       window.history.replaceState(null, '', window.location.pathname);
       await handlePostAuth();
     }
