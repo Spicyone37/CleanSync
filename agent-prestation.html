@@ -449,7 +449,7 @@ input[type=file]{display:none}
 // CONFIG
 // ══════════════════════════════════
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+const SUPABASE_ANON_KEY = 'REMPLACER_PAR_VOTRE_ANON_KEY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     flowType: 'pkce',
@@ -888,11 +888,13 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 });
 
 // ══════════════════════════════════
-// INIT : SESSION + MAGIC LINK HASH
+// INIT : SESSION + PKCE
 // ══════════════════════════════════
 (async()=>{
+  // Avec flowType:'pkce', Supabase échange automatiquement
+  // le ?code= de l'URL en session via getSession()
   const {data:{session}} = await sb.auth.getSession();
-  
+
   if(session && !currentUser){
     currentUser = session.user;
     window.history.replaceState(null, '', window.location.pathname);
@@ -902,24 +904,6 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 
   sb.auth.onAuthStateChange(async(event, session)=>{
     if((event==='SIGNED_IN' || event==='TOKEN_REFRESHED') && session && !currentUser){
-      currentUser = session.user;
-      window.history.replaceState(null, '', window.location.pathname);
-      await handlePostAuth();
-    }
-  });
-})();
-  // Vérifier session
-  const {data:{session}} = await sb.auth.getSession();
-  if(session && !currentUser){
-    currentUser = session.user;
-    window.history.replaceState(null, '', window.location.pathname);
-    await handlePostAuth();
-    return;
-  }
-
-  // Écouter les changements Auth (magic link traité en async)
-  sb.auth.onAuthStateChange(async(event, session)=>{
-    if(event==='SIGNED_IN' && session && !currentUser){
       currentUser = session.user;
       window.history.replaceState(null, '', window.location.pathname);
       await handlePostAuth();
