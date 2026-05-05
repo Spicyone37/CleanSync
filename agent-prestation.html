@@ -890,13 +890,37 @@ sb.auth.onAuthStateChange(async(event,session)=>{
     await handlePostAuth();
   }
 });
-
 // ══════════════════════════════════
-// SESSION EXISTANTE
+// SESSION EXISTANTE + HASH TOKEN
 // ══════════════════════════════════
 (async()=>{
+  // 1. Traiter le hash d'invitation/magic link dans l'URL
+  const hash = window.location.hash;
+  if(hash && hash.includes('access_token')) {
+    // Supabase lit le hash automatiquement via getSession()
+    // On lui laisse 800ms pour processer
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  // 2. Vérifier la session
   const {data:{session}}=await sb.auth.getSession();
-  if(session){currentUser=session.user;await handlePostAuth();}
+  if(session){
+    currentUser=session.user;
+    // Nettoyer l'URL (enlever le hash)
+    window.history.replaceState(null, '', window.location.pathname);
+    await handlePostAuth();
+    return;
+  }
+
+  // 3. Si pas de session, écouter l'événement Auth
+  // (couvre le cas où Supabase traite le hash en async)
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if((event==='SIGNED_IN')&&session&&!currentUser){
+      currentUser=session.user;
+      window.history.replaceState(null, '', window.location.pathname);
+      await handlePostAuth();
+    }
+  });
 })();
 </script>
 </body>
