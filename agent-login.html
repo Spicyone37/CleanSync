@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CleanSync — Connexion Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#0f1110;--surface:#1a1f1c;--surface2:#232925;
+  --border:rgba(255,255,255,.08);--text:#edf1ee;--muted:#88958d;
+  --green:#1D9E75;--green2:#27bc8d;--red:#e05c5c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:24px;}
+.container{width:100%;max-width:420px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:28px;}
+.logo{text-align:center;margin-bottom:28px;}
+.logo-badge{width:70px;height:70px;margin:auto auto 16px;border-radius:20px;background:rgba(29,158,117,.12);display:flex;align-items:center;justify-content:center;font-size:34px;}
+.logo h1{font-size:28px;margin-bottom:6px;}
+.logo p{color:var(--muted);font-size:14px;}
+.toggle{display:flex;gap:8px;background:var(--surface2);padding:6px;border-radius:14px;margin-bottom:22px;}
+.toggle button{flex:1;border:none;background:none;color:var(--muted);padding:12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.toggle button.active{background:var(--green);color:white;}
+.field{margin-bottom:18px;}
+.field label{display:block;margin-bottom:8px;color:var(--muted);font-size:13px;}
+.field input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:#0d0f0e;color:white;font-size:15px;outline:none;font-family:'DM Sans',sans-serif;}
+.field input:focus{border-color:var(--green);}
+.phone-wrap{display:flex;gap:8px;}
+.prefix{background:#0d0f0e;border:1px solid var(--border);border-radius:12px;padding:14px 12px;color:var(--muted);font-size:14px;white-space:nowrap;flex-shrink:0;}
+.phone-wrap input{flex:1;}
+.btn{width:100%;border:none;cursor:pointer;border-radius:14px;padding:15px;background:var(--green);color:white;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn:hover{background:var(--green2);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.hidden{display:none;}
+.otp-wrap{margin:20px 0;}
+.otp-label{text-align:center;color:var(--muted);font-size:14px;margin-bottom:16px;}
+.otp-label strong{color:var(--text);}
+.otp-row{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
+.otp-digit{width:48px;height:58px;text-align:center;font-size:24px;font-weight:600;border-radius:12px;border:1px solid var(--border);background:#0d0f0e;color:white;outline:none;font-family:'DM Sans',sans-serif;-webkit-appearance:none;}
+.otp-digit:focus{border-color:var(--green);}
+.resend{text-align:center;margin-top:12px;font-size:13px;color:var(--muted);}
+.resend button{background:none;border:none;color:var(--green);cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;text-decoration:underline;}
+.resend button:disabled{color:var(--muted);text-decoration:none;cursor:default;}
+.message{margin-top:18px;text-align:center;font-size:14px;padding:10px;border-radius:10px;}
+.message.success{color:#53d4a7;background:rgba(83,212,167,.08);}
+.message.error{color:var(--red);background:rgba(224,92,92,.08);}
+.hint{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+.loader{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;display:inline-block;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <div class="logo">
+      <div class="logo-badge">🧹</div>
+      <h1>CleanSync</h1>
+      <p>Espace Agent de ménage</p>
+    </div>
+
+    <!-- TOGGLE -->
+    <div class="toggle">
+      <button id="btn-email-tab" class="active">✉️ Email</button>
+      <button id="btn-phone-tab">📱 Téléphone</button>
+    </div>
+
+    <!-- PANEL EMAIL -->
+    <div id="panel-email">
+      <div class="hint">💡 Un code à 6 chiffres vous sera envoyé par email.</div>
+      <div class="field">
+        <label>Adresse email</label>
+        <input type="email" id="email-input" placeholder="agent@email.com" autocomplete="email">
+      </div>
+      <button class="btn" id="btn-email-send">Recevoir le code par email</button>
+    </div>
+
+    <!-- PANEL PHONE -->
+    <div id="panel-phone" class="hidden">
+      <div class="hint">💡 Un code à 6 chiffres vous sera envoyé par SMS.</div>
+      <div class="field">
+        <label>Numéro de téléphone</label>
+        <div class="phone-wrap">
+          <div class="prefix">🇫🇷 +33</div>
+          <input type="tel" id="phone-input" placeholder="6 12 34 56 78" autocomplete="tel">
+        </div>
+      </div>
+      <button class="btn" id="btn-phone-send">Recevoir le code SMS</button>
+    </div>
+
+    <!-- OTP SECTION -->
+    <div id="otp-section" class="hidden">
+      <div class="otp-wrap">
+        <div class="otp-label">Code envoyé à <strong id="otp-target"></strong></div>
+        <div class="otp-row">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" type="text">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" type="text">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" type="text">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" type="text">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" type="text">
+          <input class="otp-digit" maxlength="1" inputmode="numeric" type="text">
+        </div>
+        <button class="btn" id="btn-verify" disabled>Vérifier le code</button>
+        <div class="resend">
+          <button id="btn-resend" disabled>Renvoyer le code</button>
+          <span id="resend-timer"> dans <span id="resend-count">60</span>s</span>
+        </div>
+      </div>
+      <button class="btn" id="btn-back" style="background:var(--surface2);color:var(--text);margin-top:8px;">← Retour</button>
+    </div>
+
+    <div id="message" class="message hidden"></div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+// CONFIG — remplacer les clés
+// ══════════════════════════════
+const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+const APP_URL = 'https://spicyone37.github.io/CleanSync/agent-prestation.html';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    flowType: 'pkce',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'cleansync-agent'
+  }
+});
+
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+let authMode = 'email'; // 'email' | 'phone'
+let pendingTarget = ''; // email ou téléphone en attente
+let resendInterval = null;
+
+// ══════════════════════════════
+// UTILS
+// ══════════════════════════════
+function showMessage(text, type) {
+  const el = document.getElementById('message');
+  el.textContent = text;
+  el.className = 'message ' + type;
+  el.classList.remove('hidden');
+}
+function hideMessage() {
+  document.getElementById('message').className = 'message hidden';
+}
+function setLoading(btn, loading) {
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.orig = btn.innerHTML;
+    btn.innerHTML = '<span class="loader"></span>';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.orig;
+  }
+}
+function normalizePhone(raw) {
+  raw = raw.replace(/\s/g, '');
+  if (raw.startsWith('0')) raw = '+33' + raw.slice(1);
+  if (!raw.startsWith('+')) raw = '+33' + raw;
+  return raw;
+}
+
+// ══════════════════════════════
+// TOGGLE EMAIL / PHONE
+// ══════════════════════════════
+document.getElementById('btn-email-tab').addEventListener('click', () => {
+  authMode = 'email';
+  document.getElementById('btn-email-tab').classList.add('active');
+  document.getElementById('btn-phone-tab').classList.remove('active');
+  document.getElementById('panel-email').classList.remove('hidden');
+  document.getElementById('panel-phone').classList.add('hidden');
+  document.getElementById('otp-section').classList.add('hidden');
+  hideMessage();
+});
+document.getElementById('btn-phone-tab').addEventListener('click', () => {
+  authMode = 'phone';
+  document.getElementById('btn-phone-tab').classList.add('active');
+  document.getElementById('btn-email-tab').classList.remove('active');
+  document.getElementById('panel-phone').classList.remove('hidden');
+  document.getElementById('panel-email').classList.add('hidden');
+  document.getElementById('otp-section').classList.add('hidden');
+  hideMessage();
+});
+
+// ══════════════════════════════
+// ENVOYER CODE EMAIL
+// ══════════════════════════════
+document.getElementById('btn-email-send').addEventListener('click', async () => {
+  const email = document.getElementById('email-input').value.trim();
+  if (!email) { showMessage('Entrez votre email', 'error'); return; }
+  const btn = document.getElementById('btn-email-send');
+  setLoading(btn, true); hideMessage();
+
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: APP_URL,
+      shouldCreateUser: false
+    }
+  });
+
+  setLoading(btn, false);
+  if (error) { showMessage(error.message, 'error'); return; }
+
+  pendingTarget = email;
+  document.getElementById('otp-target').textContent = email;
+  showOTPSection();
+  showMessage('Code envoyé à ' + email, 'success');
+});
+
+// ══════════════════════════════
+// ENVOYER CODE SMS
+// ══════════════════════════════
+document.getElementById('btn-phone-send').addEventListener('click', async () => {
+  let phone = document.getElementById('phone-input').value.trim();
+  if (!phone) { showMessage('Entrez votre numéro', 'error'); return; }
+  phone = normalizePhone(phone);
+  const btn = document.getElementById('btn-phone-send');
+  setLoading(btn, true); hideMessage();
+
+  const { error } = await sb.auth.signInWithOtp({ phone });
+  setLoading(btn, false);
+  if (error) { showMessage(error.message, 'error'); return; }
+
+  pendingTarget = phone;
+  document.getElementById('otp-target').textContent = phone;
+  showOTPSection();
+  showMessage('Code SMS envoyé', 'success');
+});
+
+// ══════════════════════════════
+// SECTION OTP
+// ══════════════════════════════
+function showOTPSection() {
+  document.getElementById('panel-email').classList.add('hidden');
+  document.getElementById('panel-phone').classList.add('hidden');
+  document.getElementById('otp-section').classList.remove('hidden');
+  setupOTPInputs();
+  startResendTimer();
+}
+
+function setupOTPInputs() {
+  const inputs = document.querySelectorAll('.otp-digit');
+  inputs.forEach((input, i) => {
+    input.value = '';
+    input.oninput = (e) => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(-1);
+      if (e.target.value && i < 5) inputs[i + 1].focus();
+      checkReady();
+    };
+    input.onkeydown = (e) => {
+      if (e.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
+    };
+  });
+  inputs[0].focus();
+}
+
+function checkReady() {
+  const code = [...document.querySelectorAll('.otp-digit')].map(x => x.value).join('');
+  document.getElementById('btn-verify').disabled = code.length !== 6;
+}
+
+function startResendTimer() {
+  let sec = 60;
+  const btn = document.getElementById('btn-resend');
+  const timer = document.getElementById('resend-timer');
+  const count = document.getElementById('resend-count');
+  btn.disabled = true;
+  timer.style.display = 'inline';
+  count.textContent = sec;
+  if (resendInterval) clearInterval(resendInterval);
+  resendInterval = setInterval(() => {
+    sec--;
+    count.textContent = sec;
+    if (sec <= 0) {
+      clearInterval(resendInterval);
+      btn.disabled = false;
+      timer.style.display = 'none';
+    }
+  }, 1000);
+}
+
+document.getElementById('btn-resend').addEventListener('click', async () => {
+  if (authMode === 'phone') {
+    await sb.auth.signInWithOtp({ phone: pendingTarget });
+  } else {
+    await sb.auth.signInWithOtp({ email: pendingTarget, options: { shouldCreateUser: false, emailRedirectTo: APP_URL } });
+  }
+  showMessage('Code renvoyé ✓', 'success');
+  startResendTimer();
+});
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  document.getElementById('otp-section').classList.add('hidden');
+  if (authMode === 'email') document.getElementById('panel-email').classList.remove('hidden');
+  else document.getElementById('panel-phone').classList.remove('hidden');
+  hideMessage();
+});
+
+// ══════════════════════════════
+// VÉRIFIER OTP
+// ══════════════════════════════
+document.getElementById('btn-verify').addEventListener('click', async () => {
+  const code = [...document.querySelectorAll('.otp-digit')].map(x => x.value).join('');
+  const btn = document.getElementById('btn-verify');
+  setLoading(btn, true); hideMessage();
+
+  let result;
+  if (authMode === 'phone') {
+    result = await sb.auth.verifyOtp({ phone: pendingTarget, token: code, type: 'sms' });
+  } else {
+    result = await sb.auth.verifyOtp({ email: pendingTarget, token: code, type: 'email' });
+  }
+
+  const { data, error } = result;
+  if (error) {
+    showMessage('Code incorrect ou expiré', 'error');
+    setLoading(btn, false);
+    return;
+  }
+
+  await handleAuth(data.user);
+});
+
+// ══════════════════════════════
+// POST-AUTH
+// ══════════════════════════════
+async function handleAuth(user) {
+  if (!user) return;
+
+  const { data, error } = await sb
+    .from('agents')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !data) {
+    showMessage('Compte non trouvé. Contactez votre gestionnaire.', 'error');
+    await sb.auth.signOut();
+    return;
+  }
+
+  if (!data.actif) {
+    showMessage('Compte désactivé. Contactez votre gestionnaire.', 'error');
+    await sb.auth.signOut();
+    return;
+  }
+
+  // Stocker le profil pour l'app principale
+  sessionStorage.setItem('cleansync_agent', JSON.stringify(data));
+  showMessage('Connexion réussie ! Redirection...', 'success');
+
+  setTimeout(() => {
+    window.location.href = APP_URL;
+  }, 800);
+}
+
+// ══════════════════════════════
+// SESSION EXISTANTE
+// ══════════════════════════════
+(async () => {
+  // Si ?code= dans l'URL (PKCE redirect depuis email)
+  // Supabase l'échange automatiquement via getSession()
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    showMessage('Session détectée, chargement...', 'success');
+    await handleAuth(session.user);
+  }
+})();
+
+// Écouter les changements Auth (PKCE async)
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session?.user) {
+    await handleAuth(session.user);
+  }
+});
+</script>
+</body>
+</html>
