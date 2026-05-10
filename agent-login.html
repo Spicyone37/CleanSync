@@ -62,25 +62,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <p>Espace Agent de ménage</p>
     </div>
 
-    <!-- TOGGLE -->
-    <div class="toggle">
-      <button id="btn-email-tab" class="active">✉️ Email</button>
-      <button id="btn-phone-tab">📱 Téléphone</button>
-    </div>
-
-    <!-- PANEL EMAIL -->
-    <div id="panel-email">
-      <div class="hint">💡 Un code à 6 chiffres vous sera envoyé par email.</div>
-      <div class="field">
-        <label>Adresse email</label>
-        <input type="email" id="email-input" placeholder="agent@email.com" autocomplete="email">
-      </div>
-      <button class="btn" id="btn-email-send">Recevoir le code par email</button>
-    </div>
-
-    <!-- PANEL PHONE -->
-    <div id="panel-phone" class="hidden">
-      <div class="hint">💡 Un code à 6 chiffres vous sera envoyé par SMS.</div>
+    <!-- PANEL PHONE uniquement -->
+    <div id="panel-phone">
+      <div class="hint">💡 Entrez votre numéro de téléphone. Un code à 6 chiffres vous sera envoyé par SMS.</div>
       <div class="field">
         <label>Numéro de téléphone</label>
         <div class="phone-wrap">
@@ -138,8 +122,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 // ══════════════════════════════
 // STATE
 // ══════════════════════════════
-let authMode = 'email'; // 'email' | 'phone'
-let pendingTarget = ''; // email ou téléphone en attente
+let pendingPhone = '';
 let resendInterval = null;
 
 // ══════════════════════════════
@@ -172,54 +155,6 @@ function normalizePhone(raw) {
 }
 
 // ══════════════════════════════
-// TOGGLE EMAIL / PHONE
-// ══════════════════════════════
-document.getElementById('btn-email-tab').addEventListener('click', () => {
-  authMode = 'email';
-  document.getElementById('btn-email-tab').classList.add('active');
-  document.getElementById('btn-phone-tab').classList.remove('active');
-  document.getElementById('panel-email').classList.remove('hidden');
-  document.getElementById('panel-phone').classList.add('hidden');
-  document.getElementById('otp-section').classList.add('hidden');
-  hideMessage();
-});
-document.getElementById('btn-phone-tab').addEventListener('click', () => {
-  authMode = 'phone';
-  document.getElementById('btn-phone-tab').classList.add('active');
-  document.getElementById('btn-email-tab').classList.remove('active');
-  document.getElementById('panel-phone').classList.remove('hidden');
-  document.getElementById('panel-email').classList.add('hidden');
-  document.getElementById('otp-section').classList.add('hidden');
-  hideMessage();
-});
-
-// ══════════════════════════════
-// ENVOYER CODE EMAIL
-// ══════════════════════════════
-document.getElementById('btn-email-send').addEventListener('click', async () => {
-  const email = document.getElementById('email-input').value.trim();
-  if (!email) { showMessage('Entrez votre email', 'error'); return; }
-  const btn = document.getElementById('btn-email-send');
-  setLoading(btn, true); hideMessage();
-
-  const { error } = await sb.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: APP_URL,
-      shouldCreateUser: false
-    }
-  });
-
-  setLoading(btn, false);
-  if (error) { showMessage(error.message, 'error'); return; }
-
-  pendingTarget = email;
-  document.getElementById('otp-target').textContent = email;
-  showOTPSection();
-  showMessage('Code envoyé à ' + email, 'success');
-});
-
-// ══════════════════════════════
 // ENVOYER CODE SMS
 // ══════════════════════════════
 document.getElementById('btn-phone-send').addEventListener('click', async () => {
@@ -233,23 +168,18 @@ document.getElementById('btn-phone-send').addEventListener('click', async () => 
   setLoading(btn, false);
   if (error) { showMessage(error.message, 'error'); return; }
 
-  pendingTarget = phone;
+  pendingPhone = phone;
   document.getElementById('otp-target').textContent = phone;
-  showOTPSection();
-  showMessage('Code SMS envoyé', 'success');
-});
-
-// ══════════════════════════════
-// SECTION OTP
-// ══════════════════════════════
-function showOTPSection() {
-  document.getElementById('panel-email').classList.add('hidden');
   document.getElementById('panel-phone').classList.add('hidden');
   document.getElementById('otp-section').classList.remove('hidden');
   setupOTPInputs();
   startResendTimer();
-}
+  showMessage('Code SMS envoyé ✓', 'success');
+});
 
+// ══════════════════════════════
+// OTP INPUTS
+// ══════════════════════════════
 function setupOTPInputs() {
   const inputs = document.querySelectorAll('.otp-digit');
   inputs.forEach((input, i) => {
@@ -292,19 +222,14 @@ function startResendTimer() {
 }
 
 document.getElementById('btn-resend').addEventListener('click', async () => {
-  if (authMode === 'phone') {
-    await sb.auth.signInWithOtp({ phone: pendingTarget });
-  } else {
-    await sb.auth.signInWithOtp({ email: pendingTarget, options: { shouldCreateUser: false, emailRedirectTo: APP_URL } });
-  }
+  await sb.auth.signInWithOtp({ phone: pendingPhone });
   showMessage('Code renvoyé ✓', 'success');
   startResendTimer();
 });
 
 document.getElementById('btn-back').addEventListener('click', () => {
   document.getElementById('otp-section').classList.add('hidden');
-  if (authMode === 'email') document.getElementById('panel-email').classList.remove('hidden');
-  else document.getElementById('panel-phone').classList.remove('hidden');
+  document.getElementById('panel-phone').classList.remove('hidden');
   hideMessage();
 });
 
@@ -316,14 +241,12 @@ document.getElementById('btn-verify').addEventListener('click', async () => {
   const btn = document.getElementById('btn-verify');
   setLoading(btn, true); hideMessage();
 
-  let result;
-  if (authMode === 'phone') {
-    result = await sb.auth.verifyOtp({ phone: pendingTarget, token: code, type: 'sms' });
-  } else {
-    result = await sb.auth.verifyOtp({ email: pendingTarget, token: code, type: 'email' });
-  }
+  const { data, error } = await sb.auth.verifyOtp({
+    phone: pendingPhone,
+    token: code,
+    type: 'sms'
+  });
 
-  const { data, error } = result;
   if (error) {
     showMessage('Code incorrect ou expiré', 'error');
     setLoading(btn, false);
@@ -357,29 +280,22 @@ async function handleAuth(user) {
     return;
   }
 
-  // Stocker le profil pour l'app principale
   sessionStorage.setItem('cleansync_agent', JSON.stringify(data));
   showMessage('Connexion réussie ! Redirection...', 'success');
-
-  setTimeout(() => {
-    window.location.href = APP_URL;
-  }, 800);
+  setTimeout(() => { window.location.href = APP_URL; }, 800);
 }
 
 // ══════════════════════════════
 // SESSION EXISTANTE
 // ══════════════════════════════
 (async () => {
-  // Si ?code= dans l'URL (PKCE redirect depuis email)
-  // Supabase l'échange automatiquement via getSession()
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
-    showMessage('Session détectée, chargement...', 'success');
+    showMessage('Session active, chargement...', 'success');
     await handleAuth(session.user);
   }
 })();
 
-// Écouter les changements Auth (PKCE async)
 sb.auth.onAuthStateChange(async (event, session) => {
   if (event === 'SIGNED_IN' && session?.user) {
     await handleAuth(session.user);
