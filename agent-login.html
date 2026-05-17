@@ -106,7 +106,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 // CONFIG — remplacer les clés
 // ══════════════════════════════
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+const SUPABASE_ANON_KEY = 'REMPLACER_PAR_VOTRE_ANON_KEY';
 const APP_URL = 'https://spicyone37.github.io/CleanSync/agent-prestation.html';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -262,13 +262,23 @@ document.getElementById('btn-verify').addEventListener('click', async () => {
 async function handleAuth(user) {
   if (!user) return;
 
+  console.log('handleAuth user.id:', user.id);
+
   const { data, error } = await sb
     .from('agents')
     .select('*')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
+  console.log('Agent data:', JSON.stringify(data));
+  console.log('Error:', JSON.stringify(error));
+
+  if (error) {
+    showMessage('Erreur base de données : ' + error.message, 'error');
+    return;
+  }
+
+  if (!data) {
     showMessage('Compte non trouvé. Contactez votre gestionnaire.', 'error');
     await sb.auth.signOut();
     return;
