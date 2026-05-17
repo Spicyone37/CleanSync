@@ -367,10 +367,18 @@ tr:hover td{background:var(--bg)}
 // ══════════════════════════════════════
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
+// Renseigner la service_role key pour la création d'agents
+// Supabase → Settings → API → service_role
 const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDA4NTgyOCwiZXhwIjoyMDg5NjYxODI4fQ.eHsoUSm-NoeeAqpRGIa5eMHmwgZQtMaGzQV2VKbZaNQ';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const sbAdmin = supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+function getAdminClient() {
+  if (!SUPABASE_SERVICE_KEY || SUPABASE_SERVICE_KEY.startsWith('REMPLACER')) {
+    throw new Error('Service role key non configurée.');
+  }
+  return supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+}
 
 // ══════════════════════════════════════
 // STATE
