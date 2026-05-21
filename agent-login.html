@@ -5,7 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CleanSync — Connexion Agent</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+/* CleanSync UI guard: évite un double écran si le HTML est collé deux fois dans la page publiée */
+document.addEventListener('DOMContentLoaded', () => {
+  const containers = [...document.querySelectorAll('body > .container')];
+  containers.slice(1).forEach(node => node.remove());
+});
+
+</script>
 <style>
 :root{--bg:#0f1110;--surface:#1a1f1c;--surface2:#232925;--border:rgba(255,255,255,.08);--text:#edf1ee;--muted:#88958d;--green:#1D9E75;--green2:#27bc8d;--red:#e05c5c;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -42,6 +50,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .hint{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
 .loader{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;display:inline-block;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+
+/* === CleanSync UI DevOps polish v2 === */
+:where(button,a,input,select,textarea){outline-offset:3px}
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid var(--teal,#1D9E75)!important;outline-offset:3px}
+:where(.card,.auth-card,.kpi-card,.prest-card,.agent-card,.recap-card,.table-wrap){box-shadow:0 12px 40px rgba(0,0,0,.10)}
+:where(.btn,button){min-height:42px}
+:where(input,select,textarea){font-size:16px!important}
+html{scroll-behavior:smooth} body{line-height:1.45}
+.hidden{display:none!important}
+@media (max-width: 720px){
+  body{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  .container{max-width:440px!important}
+  .card,.auth-card{border-radius:22px!important;padding:22px!important}
+  .otp-row{gap:6px!important}.otp-digit{width:42px!important;height:52px!important}
+  .kpi-strip,.stats,.recap-strip{grid-template-columns:1fr 1fr!important}
+  .prest-grid,.agents-grid,.recap-grid{grid-template-columns:1fr!important}
+  .drawer{width:100%!important;max-width:none!important}
+  table{min-width:720px}.table-wrap,.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (max-width: 420px){.otp-digit{width:38px!important}.logo h1,.auth-brand-name{font-size:26px!important}}
+
+body{background:radial-gradient(circle at 50% 0%,rgba(29,158,117,.11),transparent 34%),var(--bg)!important;}
+.container{isolation:isolate}.container+.container{display:none!important}
+.card{box-shadow:0 24px 80px rgba(0,0,0,.32);backdrop-filter:blur(8px)}
+.logo-badge{box-shadow:inset 0 0 0 1px rgba(29,158,117,.15)}
+
 </style>
 </head>
 <body>
@@ -89,7 +124,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <script>
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
-const APP_URL = 'https://spicyone37.github.io/CleanSync/agent-prestation.html';
+const APP_URL = 'agent-prestation.html';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
