@@ -162,6 +162,32 @@ input[type=file]{display:none}
 .info-row:last-child{border-bottom:none}
 .info-row .lbl{color:var(--text-muted)}
 .info-row .val{font-weight:500}
+
+
+/* === CleanSync UI DevOps polish v2 === */
+:where(button,a,input,select,textarea){outline-offset:3px}
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid var(--teal,#1D9E75)!important;outline-offset:3px}
+:where(.card,.auth-card,.kpi-card,.prest-card,.agent-card,.recap-card,.table-wrap){box-shadow:0 12px 40px rgba(0,0,0,.10)}
+:where(.btn,button){min-height:42px}
+:where(input,select,textarea){font-size:16px!important}
+html{scroll-behavior:smooth} body{line-height:1.45}
+.hidden{display:none!important}
+@media (max-width: 720px){
+  body{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  .container{max-width:440px!important}
+  .card,.auth-card{border-radius:22px!important;padding:22px!important}
+  .otp-row{gap:6px!important}.otp-digit{width:42px!important;height:52px!important}
+  .kpi-strip,.stats,.recap-strip{grid-template-columns:1fr 1fr!important}
+  .prest-grid,.agents-grid,.recap-grid{grid-template-columns:1fr!important}
+  .drawer{width:100%!important;max-width:none!important}
+  table{min-width:720px}.table-wrap,.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (max-width: 420px){.otp-digit{width:38px!important}.logo h1,.auth-brand-name{font-size:26px!important}}
+
+.app-header{box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.bottom-nav{box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+.screen{max-width:760px;margin:0 auto;width:100%}
+
 </style>
 </head>
 <body>

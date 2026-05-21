@@ -217,6 +217,34 @@ tr:hover td{background:var(--bg)}
 .hint-box-g{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.5;display:flex;gap:8px;margin-top:4px;margin-bottom:12px}
 
 @media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.kpi-strip{grid-template-columns:repeat(2,1fr)}.expand-inner{grid-template-columns:1fr}}
+
+
+/* === CleanSync UI DevOps polish v2 === */
+:where(button,a,input,select,textarea){outline-offset:3px}
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid var(--teal,#1D9E75)!important;outline-offset:3px}
+:where(.card,.auth-card,.kpi-card,.prest-card,.agent-card,.recap-card,.table-wrap){box-shadow:0 12px 40px rgba(0,0,0,.10)}
+:where(.btn,button){min-height:42px}
+:where(input,select,textarea){font-size:16px!important}
+html{scroll-behavior:smooth} body{line-height:1.45}
+.hidden{display:none!important}
+@media (max-width: 720px){
+  body{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  .container{max-width:440px!important}
+  .card,.auth-card{border-radius:22px!important;padding:22px!important}
+  .otp-row{gap:6px!important}.otp-digit{width:42px!important;height:52px!important}
+  .kpi-strip,.stats,.recap-strip{grid-template-columns:1fr 1fr!important}
+  .prest-grid,.agents-grid,.recap-grid{grid-template-columns:1fr!important}
+  .drawer{width:100%!important;max-width:none!important}
+  table{min-width:720px}.table-wrap,.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (max-width: 420px){.otp-digit{width:38px!important}.logo h1,.auth-brand-name{font-size:26px!important}}
+
+@media (max-width: 900px){
+  .app{display:block!important}.sidebar{position:sticky!important;top:0!important;width:100%!important;min-height:auto!important;height:auto!important;z-index:80!important;border-right:0!important;border-bottom:1px solid var(--border)!important;display:block!important;padding:10px!important}
+  .sidebar-logo,.sidebar-footer{display:none!important}.nav{display:flex!important;overflow-x:auto!important;gap:6px!important;padding:0!important}.nav-section{display:none!important}.nav-item{white-space:nowrap!important;margin:0!important;flex:0 0 auto!important}
+  .main{margin-left:0!important}.topbar{padding:14px 16px!important}.content{padding:18px 16px!important}.kpi-strip{grid-template-columns:repeat(2,1fr)!important}.expand-inner{grid-template-columns:1fr!important}
+}
+
 </style>
 </head>
 <body>
@@ -367,17 +395,28 @@ tr:hover td{background:var(--bg)}
 // ══════════════════════════════════════
 const SUPABASE_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwODU4MjgsImV4cCI6MjA4OTY2MTgyOH0.gPEMKub0ICvotUoY0fU-Yrx1vHpNxaA8OWCVnCxPrvI';
-// Renseigner la service_role key pour la création d'agents
-// Supabase → Settings → API → service_role
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3d2ZkaHJsdmJmZG1rbXhwd2RlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDA4NTgyOCwiZXhwIjoyMDg5NjYxODI4fQ.eHsoUSm-NoeeAqpRGIa5eMHmwgZQtMaGzQV2VKbZaNQ';
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function getAdminClient() {
-  if (!SUPABASE_SERVICE_KEY || SUPABASE_SERVICE_KEY.startsWith('REMPLACER')) {
-    throw new Error('Service role key non configurée.');
+async function callAdminCreateAgent(payload) {
+  const { data: { session }, error: sessionError } = await sb.auth.getSession();
+  if (sessionError || !session?.access_token) {
+    throw new Error('Session gestionnaire introuvable. Reconnectez-vous.');
   }
-  return supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-create-agent`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || data.msg || 'Erreur création agent.');
+  }
+  return data;
 }
 
 // ══════════════════════════════════════
@@ -922,49 +961,40 @@ async function submitNewAgent() {
 
   const checked = [...document.querySelectorAll('#logement-check-list input:checked')].map(x => x.value);
 
-  if (drawerCanal === 'phone') {
-    let phone = document.getElementById('d-atel')?.value.replace(/\s/g,'') || '';
-    if (!phone) { toast('Le numéro est requis', 'error'); return; }
-    if (phone.startsWith('0')) phone = '+33' + phone.slice(1);
-    if (!phone.startsWith('+')) phone = '+33' + phone;
+  try {
+    if (drawerCanal === 'phone') {
+      let phone = document.getElementById('d-atel')?.value.replace(/\s/g,'') || '';
+      if (!phone) { toast('Le numéro est requis', 'error'); return; }
+      if (phone.startsWith('0')) phone = '+33' + phone.slice(1);
+      if (!phone.startsWith('+')) phone = '+33' + phone;
 
-    // Créer le compte Auth via Admin API
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` },
-      body: JSON.stringify({ phone, phone_confirm: true, user_metadata: { role: 'agent', nom, prestataire_id: prestId } })
-    });
-    const userData = await res.json();
-    if (!res.ok) { toast(userData.msg || 'Erreur création compte', 'error'); return; }
+      await callAdminCreateAgent({
+        channel: 'phone',
+        nom,
+        prestataire_id: prestId,
+        phone,
+        logement_ids: checked
+      });
+      toast(`Agent créé (SMS) ✓`, 'success');
+    } else {
+      const email = document.getElementById('d-aemail')?.value.trim();
+      if (!email) { toast('L\'email est requis', 'error'); return; }
 
-    // Créer le profil agent
-    const { data: agData } = await sb.from('agents').insert({ user_id: userData.id, nom, telephone: phone, prestataire_id: prestId }).select('id').single();
-    if (agData && checked.length) {
-      await sb.from('agent_logements').insert(checked.map(lid => ({ agent_id: agData.id, logement_id: lid })));
+      await callAdminCreateAgent({
+        channel: 'email',
+        nom,
+        prestataire_id: prestId,
+        email,
+        logement_ids: checked
+      });
+      toast(`Agent créé (Email) ✓`, 'success');
     }
-    toast(`Agent créé (SMS) ✓`, 'success');
 
-  } else {
-    const email = document.getElementById('d-aemail')?.value.trim();
-    if (!email) { toast('L\'email est requis', 'error'); return; }
-
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}` },
-      body: JSON.stringify({ email, email_confirm: true, user_metadata: { role: 'agent', nom, prestataire_id: prestId } })
-    });
-    const userData = await res.json();
-    if (!res.ok) { toast(userData.msg || 'Erreur création compte', 'error'); return; }
-
-    const { data: agData } = await sb.from('agents').insert({ user_id: userData.id, nom, email, prestataire_id: prestId }).select('id').single();
-    if (agData && checked.length) {
-      await sb.from('agent_logements').insert(checked.map(lid => ({ agent_id: agData.id, logement_id: lid })));
-    }
-    toast(`Agent créé (Email) ✓`, 'success');
+    closeDrawerDirect();
+    loadAgents();
+  } catch (error) {
+    toast(error.message || 'Erreur création agent', 'error');
   }
-
-  closeDrawerDirect();
-  loadAgents();
 }
 
 async function submitEditAgent() {
