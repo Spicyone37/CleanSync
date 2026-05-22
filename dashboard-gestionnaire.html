@@ -403,7 +403,7 @@ async function callAdminCreateAgent(payload) {
     throw new Error('Session gestionnaire introuvable. Reconnectez-vous.');
   }
 
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-create-agent`, {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-create-agent-secure`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
