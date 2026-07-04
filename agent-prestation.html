@@ -569,11 +569,14 @@ document.getElementById('btn-send-magic').addEventListener('click', async () => 
 // OTP SMS
 // ══════════════════════════════════
 document.getElementById('btn-send-otp').addEventListener('click', async () => {
-  let raw=document.getElementById('auth-phone').value.replace(/\s/g,'');
+  let raw=document.getElementById('auth-phone').value.replace(/[^\d+]/g,'');
   if(!raw){toast('Entrez votre numéro','error');return;}
   // Normaliser : 06... → +336...
+  if(raw.startsWith('0033')) raw='+33'+raw.slice(4);
+  if(raw.startsWith('33')) raw='+33'+raw.slice(2);
   if(raw.startsWith('0')) raw='+33'+raw.slice(1);
   if(!raw.startsWith('+')) raw='+33'+raw;
+  if(!/^\+33[67]\d{8}$/.test(raw)){toast('Numéro mobile français invalide','error');return;}
   pendingPhone=raw;
 
   const btn=document.getElementById('btn-send-otp');
@@ -664,7 +667,7 @@ function enterApp(){
 async function logout(){
   sessionStorage.removeItem('cleansync_agent');
   await sb.auth.signOut();
-  window.location.href = 'agent-login.html';
+  window.location.href = window.location.pathname.includes('-corrige') || window.location.pathname.includes('-3') ? 'agent-login-corrige.html' : 'agent-login.html';
 }
 
 // ══════════════════════════════════
@@ -894,7 +897,7 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 // INIT : lecture sessionStorage
 // ══════════════════════════════════
 (async()=>{
-  const LOGIN_URL = 'agent-login.html';
+  const LOGIN_URL = window.location.pathname.includes('-corrige') || window.location.pathname.includes('-3') ? 'agent-login-corrige.html' : 'agent-login.html';
 
   // 1. Lire le profil depuis sessionStorage (mis par agent-login.html)
   const stored = sessionStorage.getItem('cleansync_agent');
