@@ -1479,13 +1479,6 @@ html{scroll-behavior:smooth} body{line-height:1.45}
             </div>
 
             <div style="height:1px;background:var(--line);margin:20px 0"></div>
-            <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">🔄 Proxy iCal</div>
-            <div class="fg" style="margin-bottom:20px">
-              <label>URL Proxy</label>
-              <input type="text" id="proxy-input" class="fi">
-            </div>
-
-            <div style="height:1px;background:var(--line);margin:20px 0"></div>
             <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">🔒 Sécurité</div>
             <div class="fg" style="max-width:320px;margin-bottom:20px">
               <label>Nouveau mot de passe</label>
@@ -1592,11 +1585,11 @@ html{scroll-behavior:smooth} body{line-height:1.45}
 <!-- SMS preview -->
 <div class="overlay" id="ov-sms">
   <div class="modal" style="max-width:500px">
-    <div class="modal-title">📱 Envoyer par iPhone</div>
+    <div class="modal-title">📱 Envoyer le SMS</div>
     <div id="sms-preview"></div>
     <div class="modal-foot">
       <button class="btn btn-g" onclick="closeOverlay('ov-sms')">Fermer</button>
-      <button class="btn btn-iphone" onclick="doSendSMS()">📤 Ouvrir Messages</button>
+      <button class="btn btn-iphone" id="sms-send-btn" onclick="doSendSMS()">📤 Envoyer</button>
     </div>
   </div>
 </div>
@@ -1674,7 +1667,7 @@ let S = {   // état global
   logements:    [],
   reservations: [],
   smsList:      [],
-  settings:     { proxyUrl: 'https://api.allorigins.win/raw?url=', templateCheckin: DEF_TPL.checkin, templateCheckout: DEF_TPL.checkout }
+  settings:     { templateCheckin: DEF_TPL.checkin, templateCheckout: DEF_TPL.checkout }
 };
 
 let _editSocIdx = -1;
@@ -1867,12 +1860,12 @@ async function loadFromSupabase() {
   ]);
 
   S.societes     = (socR.data || []).map(s => ({ id: s.id, nom: s.nom, contact: s.contact, tel: s.tel, tarif: s.tarif }));
-  S.logements    = (logR.data || []).map(l => ({ id: l.id, nom: l.nom, adresse: l.adresse, code: l.code, societeId: l.societe_id, icalAirbnb: l.ical_airbnb, icalBooking: l.ical_booking, lastSync: l.last_sync }));
+  S.logements    = (logR.data || []).map(l => ({ id: l.id, nom: l.nom, adresse: l.adresse, code: l.code, societeId: l.societe_id, icalAirbnb: l.ical_airbnb, icalBooking: l.ical_booking, lastSync: l.last_sync, archived: l.archived || false }));
   S.reservations = (resR.data || []).map(r => ({ id: r.id, logIdx: r.logement_id, logId: r.logement_id, socIdx: r.societe_id, socId: r.societe_id, platform: r.platform, voyageur: r.voyageur, checkin: r.checkin, checkinH: r.checkin_h, checkout: r.checkout, checkoutH: r.checkout_h, statusIn: r.status_checkin, statusOut: r.status_checkout, uid: r.uid_ical, source: r.source }));
   S.smsList      = (smsR.data || []).map(s => ({ date: new Date(s.sent_at).toLocaleString('fr-FR'), societe: s.societe_nom || '—', logement: s.logement_nom || '—', type: s.type === 'checkin' ? 'Entrée' : 'Sortie', message: s.message || '' }));
 
   if (setR.data) {
-    S.settings = { proxyUrl: setR.data.proxy_url || S.settings.proxyUrl, templateCheckin: setR.data.template_checkin || DEF_TPL.checkin, templateCheckout: setR.data.template_checkout || DEF_TPL.checkout };
+    S.settings = { templateCheckin: setR.data.template_checkin || DEF_TPL.checkin, templateCheckout: setR.data.template_checkout || DEF_TPL.checkout };
   }
 }
 
@@ -2105,30 +2098,43 @@ window.saveLog = async function() {
 };
 
 window.deleteLog = async function(idx) {
-  if (!confirm('Supprimer ce logement ?')) return;
   const l = S.logements[idx];
-  if (USE_SUPABASE && l.id) await sbDelete('logements', l.id);
-  S.logements.splice(idx, 1);
-  save(); renderLogements(); toast('Logement supprimé', 'info');
+  if (!confirm(`Archiver "${l.nom}" ? Il disparaîtra de la liste active mais l'historique de ses réservations et SMS sera conservé. Vous pourrez le restaurer plus tard.`)) return;
+  if (USE_SUPABASE && l.id) await sbUpdate('logements', l.id, { archived: true });
+  l.archived = true; // on ne retire pas l'élément du tableau : les réservations existantes y font référence par index
+  save(); renderLogements(); toast('Logement archivé', 'info');
+};
+
+window.restoreLog = async function(idx) {
+  const l = S.logements[idx];
+  if (USE_SUPABASE && l.id) await sbUpdate('logements', l.id, { archived: false });
+  l.archived = false;
+  save(); renderLogements(); toast('Logement restauré', 'success');
 };
 
 function renderLogements() {
   const el = document.getElementById('logements-list');
-  if (!S.logements.length) { el.innerHTML = '<div class="card card-body" style="padding:40px;text-align:center;color:var(--fog)">Aucun logement — ajoutez votre premier bien</div>'; return; }
-  el.innerHTML = S.logements.map((l,i) => {
+  const active   = S.logements.map((l,i)=>({l,i})).filter(x => !x.l.archived);
+  const archived = S.logements.map((l,i)=>({l,i})).filter(x => x.l.archived);
+
+  if (!active.length && !archived.length) { el.innerHTML = '<div class="card card-body" style="padding:40px;text-align:center;color:var(--fog)">Aucun logement — ajoutez votre premier bien</div>'; return; }
+
+  const card = (l, i, isArchived) => {
     const soc = getSoc(l.societeId || l.societeIdx);
     const syncLbl = l.lastSync ? `Sync : ${new Date(l.lastSync).toLocaleDateString('fr-FR')}` : 'Jamais synchronisé';
     return `
-    <div class="lc">
+    <div class="lc" style="${isArchived?'opacity:.55':''}">
       <div class="lc-head">
         <div>
           <div class="lc-name">${esc(l.nom)}</div>
           <div class="lc-addr">${esc(l.adresse)}</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-s btn-sm" onclick="openLogementModal(${i})">✏️</button>
-          <button class="btn btn-j btn-sm" onclick="syncLogement(${i})">🔄 Sync</button>
-          <button class="btn btn-d btn-sm" onclick="deleteLog(${i})">🗑</button>
+          ${isArchived
+            ? `<button class="btn btn-s btn-sm" onclick="restoreLog(${i})">♻️ Restaurer</button>`
+            : `<button class="btn btn-s btn-sm" onclick="openLogementModal(${i})">✏️</button>
+               <button class="btn btn-j btn-sm" onclick="syncLogement(${i})">🔄 Sync</button>
+               <button class="btn btn-d btn-sm" onclick="deleteLog(${i})">🗑 Archiver</button>`}
         </div>
       </div>
       <div class="lc-body">
@@ -2139,71 +2145,52 @@ function renderLogements() {
         <div class="lc-sync">${syncLbl}</div>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  let html = active.map(x => card(x.l, x.i, false)).join('');
+  if (archived.length) {
+    html += `
+    <div style="margin:24px 0 12px;font-size:12px;font-weight:600;color:var(--fog);text-transform:uppercase;letter-spacing:.6px">
+      Archivés (${archived.length})
+    </div>` + archived.map(x => card(x.l, x.i, true)).join('');
+  }
+  el.innerHTML = html;
 }
 
 // ============================================================
 // iCAL SYNC
 // ============================================================
-function parseIcal(text) {
-  const evts = [];
-  const re = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;
-  let m;
-  while ((m = re.exec(text)) !== null) {
-    const blk = m[1];
-    const get = k => { const r = new RegExp(k+'[^:]*:([^\r\n]+)').exec(blk); return r ? r[1].trim() : null; };
-    const ds = get('DTSTART'), de = get('DTEND');
-    if (ds && de) evts.push({ uid: get('UID'), summary: (get('SUMMARY')||'').replace(/\\n/g,' ').replace(/\\,/g,','), start: icalISO(ds), end: icalISO(de) });
-  }
-  return evts;
-}
-function icalISO(d) { const c=d.replace(/[TZ\s]/g,''); return `${c.slice(0,4)}-${c.slice(4,6)}-${c.slice(6,8)}`; }
-
 window.syncLogement = async function(idx) {
   const l = S.logements[idx];
-  const proxy = S.settings.proxyUrl || 'https://api.allorigins.win/raw?url=';
-  let n = 0;
-
-  const fetchIcal = async (url, plat) => {
-    if (!url) return;
-    try {
-      const ctl = new AbortController();
-      const tid = setTimeout(() => ctl.abort(), 12000);
-      const res = await fetch(proxy + encodeURIComponent(url), { signal: ctl.signal });
-      clearTimeout(tid);
-      if (!res.ok) throw Error(`HTTP ${res.status}`);
-      const evts = parseIcal(await res.text());
-      for (const ev of evts) {
-        if (!ev.start || !ev.end) continue;
-        if (S.reservations.find(r => r.uid === ev.uid)) continue;
-        const newResa = {
-          logIdx: idx, logId: l.id,
-          socIdx: l.societeIdx || '', socId: l.societeId || '',
-          platform: plat, voyageur: ev.summary || `Réservation ${plat}`,
-          checkin: ev.start, checkinH: '15:00',
-          checkout: ev.end, checkoutH: '11:00',
-          statusIn: 'pending', statusOut: 'pending',
-          uid: ev.uid, source: 'ical',
-          createdAt: new Date().toISOString()
-        };
-        if (USE_SUPABASE) {
-          const ins = await sbInsert('reservations', { user_id: S.user.id, logement_id: l.id || null, societe_id: l.societeId || null, platform: plat, voyageur: newResa.voyageur, checkin: ev.start, checkout: ev.end, checkin_h: '15:00', checkout_h: '11:00', uid_ical: ev.uid, source: 'ical' });
-          if (ins) { newResa.id = ins.id; S.reservations.push(newResa); n++; }
-        } else {
-          S.reservations.push(newResa); n++;
-        }
-      }
-    } catch(e) { toast(`Erreur sync ${plat} : ${e.message}`, 'error'); }
-  };
+  if (!l.id) { toast('Enregistrez d\'abord ce logement avant de synchroniser', 'error'); return; }
+  if (!USE_SUPABASE) { toast('Synchronisation indisponible en mode hors-ligne', 'error'); return; }
 
   toast('Synchronisation…', 'info');
-  await fetchIcal(l.icalAirbnb, 'Airbnb');
-  await fetchIcal(l.icalBooking, 'Booking');
-  S.logements[idx].lastSync = new Date().toISOString();
-  if (USE_SUPABASE && l.id) await sbUpdate('logements', l.id, { last_sync: S.logements[idx].lastSync });
-  save();
-  toast(`${n} réservation(s) importée(s)`, n ? 'success' : 'info');
-  renderAll();
+  try {
+    const { data: { session } } = await supabase_client.auth.getSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-ical`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ logement_id: l.id }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+
+    if (result.errors?.length) {
+      result.errors.forEach(e => toast(`Erreur sync : ${e}`, 'error'));
+    }
+
+    S.logements[idx].lastSync = new Date().toISOString();
+    await loadFromSupabase(); // recharge S.reservations/logements depuis Supabase pour récupérer les nouvelles lignes
+    save();
+    toast(`${result.imported || 0} réservation(s) importée(s)`, result.imported ? 'success' : 'info');
+    renderAll();
+  } catch (e) {
+    toast(`Erreur de synchronisation : ${e.message}`, 'error');
+  }
 };
 
 window.syncAll = async function() {
@@ -2215,7 +2202,7 @@ window.syncAll = async function() {
 // RÉSERVATIONS
 // ============================================================
 window.openResaModal = function() {
-  fillSel('m-log', S.logements, 'nom');
+  fillSel('m-log', S.logements.filter(l => !l.archived), 'nom');
   fillSel('m-soc', S.societes, 'nom');
   openOverlay('ov-resa');
 };
@@ -2297,7 +2284,7 @@ function renderResas() {
   const tb = document.getElementById('resa-tbody');
 
   // Refresh modal selects
-  fillSel('m-log', S.logements, 'nom');
+  fillSel('m-log', S.logements.filter(l => !l.archived), 'nom');
   fillSel('m-soc', S.societes, 'nom');
 
   if (!active.length) { tb.innerHTML = '<tr><td class="empty-td" colspan="7">Aucune réservation active</td></tr>'; return; }
@@ -2387,7 +2374,7 @@ window.prepareSMS = function(idx, type) {
       <div class="sms-to-tel">${esc(soc.tel)}</div>
     </div>
     <div class="sms-phone">
-      <div class="sms-phone-hd">💬 Messages › ${esc(soc.nom)}</div>
+      <div class="sms-phone-hd">💬 Aperçu du SMS</div>
       <div class="sms-bubble">${msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
     </div>`;
   openOverlay('ov-sms');
@@ -2395,27 +2382,39 @@ window.prepareSMS = function(idx, type) {
 
 window.doSendSMS = async function() {
   if (!_pendingSMS) return;
-  const { idx, type, soc, msg } = _pendingSMS;
-  window.location.href = `sms:${soc.tel.replace(/[\s\-.]/g,'')}&&body=${encodeURIComponent(msg)}`;
-
+  const { idx, type } = _pendingSMS;
   const r = S.reservations[idx];
-  if (r) {
-    if (type==='checkin')  r.statusIn  = 'sent';
-    if (type==='checkout') r.statusOut = 'sent';
+  if (!r?.id) { toast('Réservation introuvable', 'error'); return; }
+  if (!USE_SUPABASE) { toast('Envoi SMS indisponible en mode hors-ligne', 'error'); return; }
+
+  const btn = document.getElementById('sms-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Envoi en cours…'; }
+
+  try {
+    const { data: { session } } = await supabase_client.auth.getSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-sms`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ reservation_id: r.id, type }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+
+    if (type === 'checkin')  r.statusIn  = 'sent';
+    if (type === 'checkout') r.statusOut = 'sent';
+
+    await loadFromSupabase(); // recharge sms_logs + statuts depuis Supabase
+    save(); closeOverlay('ov-sms');
+    toast('SMS envoyé ✓', 'success');
+    renderAll();
+  } catch (e) {
+    toast(`Échec de l'envoi : ${e.message}`, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Envoyer'; }
   }
-
-  const logNom = _pendingSMS.log?.nom || '—';
-  const entry  = { date: new Date().toLocaleString('fr-FR'), societe: soc.nom, logement: logNom, type: type==='checkin'?'Entrée':'Sortie', message: msg.substring(0,60) + (msg.length>60?'…':'') };
-  S.smsList.unshift(entry);
-
-  if (USE_SUPABASE) {
-    await sbInsert('sms_logs', { user_id: S.user.id, societe_nom: soc.nom, logement_nom: logNom, type, message: msg });
-    if (r?.id) await sbUpdate('reservations', r.id, type==='checkin' ? { status_checkin:'sent' } : { status_checkout:'sent' });
-  }
-
-  save(); closeOverlay('ov-sms');
-  toast('Messages ouvert ✓', 'success');
-  renderAll();
 };
 
 // ============================================================
@@ -2617,13 +2616,11 @@ function renderSmsAuto() {
 // SETTINGS
 // ============================================================
 function renderSettings() {
-  document.getElementById('proxy-input').value = S.settings.proxyUrl || '';
   document.getElementById('tpl-in').value      = S.settings.templateCheckin  || DEF_TPL.checkin;
   document.getElementById('tpl-out').value     = S.settings.templateCheckout || DEF_TPL.checkout;
 }
 
 window.saveSettings = async function() {
-  S.settings.proxyUrl          = document.getElementById('proxy-input').value.trim();
   S.settings.templateCheckin   = document.getElementById('tpl-in').value;
   S.settings.templateCheckout  = document.getElementById('tpl-out').value;
 
@@ -2642,7 +2639,7 @@ window.saveSettings = async function() {
   }
 
   if (USE_SUPABASE) {
-    const { error } = await supabase_client.from('settings').upsert({ user_id: S.user.id, proxy_url: S.settings.proxyUrl, template_checkin: S.settings.templateCheckin, template_checkout: S.settings.templateCheckout, updated_at: new Date().toISOString() });
+    const { error } = await supabase_client.from('settings').upsert({ user_id: S.user.id, template_checkin: S.settings.templateCheckin, template_checkout: S.settings.templateCheckout, updated_at: new Date().toISOString() });
     if (error) { toast('Erreur Supabase : ' + error.message, 'error'); return; }
   }
 
