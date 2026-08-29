@@ -667,7 +667,7 @@ function enterApp(){
 async function logout(){
   sessionStorage.removeItem('cleansync_agent');
   await sb.auth.signOut();
-  window.location.href = window.location.pathname.includes('-corrige') || window.location.pathname.includes('-3') ? 'agent-login-corrige.html' : 'agent-login.html';
+  window.location.href = 'agent-login.html';
 }
 
 // ══════════════════════════════════
@@ -897,7 +897,7 @@ document.getElementById('btn-export-pdf').addEventListener('click',()=>{
 // INIT : lecture sessionStorage
 // ══════════════════════════════════
 (async()=>{
-  const LOGIN_URL = window.location.pathname.includes('-corrige') || window.location.pathname.includes('-3') ? 'agent-login-corrige.html' : 'agent-login.html';
+  const LOGIN_URL = 'agent-login.html';
 
   // 1. Lire le profil depuis sessionStorage (mis par agent-login.html)
   const stored = sessionStorage.getItem('cleansync_agent');
