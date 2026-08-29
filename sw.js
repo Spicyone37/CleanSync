@@ -2,18 +2,25 @@
 // CleanSync — Service Worker
 // Stratégie : Network First avec fallback cache
 // Permet l'utilisation offline et l'installation sur iPhone/Android
+//
+// Tous les chemins sont RELATIFS (pas de "/CleanSync/" en dur) afin
+// que le service worker fonctionne quel que soit l'endroit où l'app
+// est déployée : sous-dossier GitHub Pages, racine d'un domaine
+// personnalisé, etc. Les chemins relatifs se résolvent par rapport
+// à l'emplacement de ce fichier sw.js lui-même.
 // ============================================================
 
-const CACHE_NAME    = 'cleansync-v1';
-const OFFLINE_URL   = '/CleanSync/';
+const CACHE_NAME  = 'cleansync-v2';
+const OFFLINE_URL = './index.html';
 
-// Ressources à mettre en cache immédiatement à l'installation
+// Ressources à mettre en cache immédiatement à l'installation.
+// Les icônes sont à la racine du dépôt (pas dans un sous-dossier /icons/).
 const PRECACHE_URLS = [
-  '/CleanSync/',
-  '/CleanSync/index.html',
-  '/CleanSync/manifest.json',
-  '/CleanSync/icons/icon-192.png',
-  '/CleanSync/icons/icon-512.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 // ============================================================
@@ -46,7 +53,7 @@ self.addEventListener('activate', event => {
 // FETCH — Network First, fallback cache
 // ============================================================
 self.addEventListener('fetch', event => {
-  // Ne pas intercepter les requêtes Supabase (auth, données)
+  // Ne pas intercepter les requêtes vers des services tiers
   if (event.request.url.includes('supabase.co')) return;
   if (event.request.url.includes('googleapis.com')) return;
   if (event.request.url.includes('jsdelivr.net')) return;
@@ -56,15 +63,11 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // Mettre en cache la réponse fraîche
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           return response;
         })
-        .catch(() => {
-          // Offline : servir depuis le cache
-          return caches.match(OFFLINE_URL) || caches.match('/CleanSync/index.html');
-        })
+        .catch(() => caches.match(OFFLINE_URL))
     );
     return;
   }
