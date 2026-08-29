@@ -427,6 +427,7 @@ let currentPeriodMonths = 1;
 let expandedRow = null;
 let allLogements = [];
 let allPrestataires = [];
+let allAgents = [];
 let drawerMode = null; // 'new-prestataire' | 'edit-prestataire' | 'new-agent' | 'edit-agent'
 let editingId = null;
 let drawerCanal = 'phone';
@@ -434,12 +435,21 @@ let drawerCanal = 'phone';
 // ══════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════
+// Échappement HTML — TOUTE donnée provenant de la base (noms, notes,
+// descriptions d'incident...) doit passer par esc() avant d'être
+// insérée via innerHTML, sans quoi un champ texte peut contenir du
+// code exécutable (faille XSS stockée).
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 const fmtDate = dt => dt ? new Date(dt).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
 const fmtTime = dt => dt ? new Date(dt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '—';
 const fmtDuree = min => { if(!min) return '—'; const h=Math.floor(min/60),m=min%60; return h>0?`${h}h${String(m).padStart(2,'0')}`:`${m}min`; };
 const fmtMois = iso => iso ? new Date(iso).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) : '—';
-const initials = n => (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-const typeLabel = t => ({degat:'Dégât matériel',equipement_manquant:'Équip. manquant',equipement_casse:'Équip. cassé',hygiene:'Hygiène',autre:'Autre'})[t]||t;
+const initials = n => esc((n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2));
+const typeLabel = t => esc(({degat:'Dégât matériel',equipement_manquant:'Équip. manquant',equipement_casse:'Équip. cassé',hygiene:'Hygiène',autre:'Autre'})[t]||t);
 
 function toast(msg, type='') {
   const t = document.getElementById('toast');
@@ -536,9 +546,9 @@ async function loadPrestations() {
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
     tr.innerHTML = `
-      <td><strong>${p.logement_nom||'—'}</strong></td>
-      <td><div class="agent-tag"><div class="av">${initials(p.agent_nom)}</div>${p.agent_nom||'—'}</div></td>
-      <td style="color:var(--muted);font-size:12px">${p.prestataire_nom||'—'}</td>
+      <td><strong>${esc(p.logement_nom)||'—'}</strong></td>
+      <td><div class="agent-tag"><div class="av">${initials(p.agent_nom)}</div>${esc(p.agent_nom)||'—'}</div></td>
+      <td style="color:var(--muted);font-size:12px">${esc(p.prestataire_nom)||'—'}</td>
       <td>${fmtDate(p.heure_debut)}</td>
       <td class="mono">${fmtTime(p.heure_debut)}</td>
       <td class="mono">${fmtTime(p.heure_fin)}</td>
@@ -573,17 +583,17 @@ async function toggleExpand(tr, p) {
   const incHtml = incidents?.length ? incidents.map(i=>`
     <div style="padding:8px 0;border-bottom:1px solid var(--border)">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span class="badge badge-${i.gravite}">${i.gravite}</span>
+        <span class="badge badge-${esc(i.gravite)}">${esc(i.gravite)}</span>
         <span style="font-size:13px;font-weight:500">${typeLabel(i.type_incident)}</span>
       </div>
-      <div style="font-size:12px;color:var(--muted)">${i.description}</div>
+      <div style="font-size:12px;color:var(--muted)">${esc(i.description)}</div>
       <div class="photo-thumbs" style="margin-top:8px">${thumbs(pi)}</div>
     </div>`).join('') : '<span style="color:var(--muted);font-size:12px">Aucun incident</span>';
 
   const expTr = document.createElement('tr');
   expTr.className = 'row-expand'; expTr.id = 'expand-'+p.id;
   expTr.innerHTML = `<td colspan="10"><div class="expand-inner">
-    <div><div class="expand-title">Notes</div>${p.notes||'<span style="color:var(--muted)">—</span>'}</div>
+    <div><div class="expand-title">Notes</div>${p.notes ? esc(p.notes) : '<span style="color:var(--muted)">—</span>'}</div>
     <div><div class="expand-title">Photos (${pp.length})</div><div class="photo-thumbs">${thumbs(pp)}</div></div>
     <div><div class="expand-title">Incidents (${incidents?.length||0})</div>${incHtml}</div>
   </div></td>`;
@@ -608,11 +618,11 @@ async function loadIncidents() {
     const p = i.prestations;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:500">${typeLabel(i.type_incident)}</span><span style="font-size:11px;color:var(--muted)">📍 ${p?.logements?.nom||'—'}</span></div></td>
-      <td><div class="agent-tag"><div class="av">${initials(p?.agents?.nom||'?')}</div>${p?.agents?.nom||'—'}</div></td>
+      <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:500">${typeLabel(i.type_incident)}</span><span style="font-size:11px;color:var(--muted)">📍 ${esc(p?.logements?.nom)||'—'}</span></div></td>
+      <td><div class="agent-tag"><div class="av">${initials(p?.agents?.nom||'?')}</div>${esc(p?.agents?.nom)||'—'}</div></td>
       <td>${fmtDate(p?.heure_debut)}</td>
-      <td><span class="badge badge-${i.gravite}">${i.gravite}</span></td>
-      <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--muted)">${i.description}</td>
+      <td><span class="badge badge-${esc(i.gravite)}">${esc(i.gravite)}</span></td>
+      <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--muted)">${esc(i.description)}</td>
       <td id="incph-${i.id}">📷 —</td>
       <td><button class="resolve-btn ${i.resolu?'resolved':''}" id="res-${i.id}" onclick="toggleResolve('${i.id}',${i.resolu})">${i.resolu?'✓ Résolu':'Marquer résolu'}</button></td>`;
     tbody.appendChild(tr);
@@ -655,7 +665,7 @@ async function loadRecap() {
     card.className = 'recap-card';
     card.innerHTML = `
       <div class="recap-card-header">
-        <div><div class="recap-agent-name">${l.agent_nom}</div><div class="recap-month">${fmtMois(l.mois)}</div></div>
+        <div><div class="recap-agent-name">${esc(l.agent_nom)}</div><div class="recap-month">${fmtMois(l.mois)}</div></div>
         <div class="av av-lg">${initials(l.agent_nom)}</div>
       </div>
       <div class="recap-stats">
@@ -672,8 +682,8 @@ async function loadRecap() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${fmtMois(r.mois)}</td>
-      <td><div class="agent-tag"><div class="av">${initials(r.agent_nom)}</div>${r.agent_nom}</div></td>
-      <td style="color:var(--muted);font-size:12px">${r.prestataire_nom||'—'}</td>
+      <td><div class="agent-tag"><div class="av">${initials(r.agent_nom)}</div>${esc(r.agent_nom)}</div></td>
+      <td style="color:var(--muted);font-size:12px">${esc(r.prestataire_nom)||'—'}</td>
       <td class="mono">${r.nb_prestations}</td>
       <td class="mono"><strong>${parseFloat(r.total_heures).toFixed(1)}h</strong></td>
       <td class="mono">${r.nb_logements_distincts}</td>
@@ -708,9 +718,9 @@ async function loadPrestataires() {
       <div class="prest-card-header">
         <div class="av av-lg" style="background:rgba(29,158,117,.1)">${initials(p.nom)}</div>
         <div class="prest-card-info">
-          <div class="prest-card-name">${p.nom}</div>
-          <div class="prest-card-contact">${p.email||''} ${p.telephone?'· '+p.telephone:''}</div>
-          ${p.siret?`<div class="prest-card-contact">SIRET : ${p.siret}</div>`:''}
+          <div class="prest-card-name">${esc(p.nom)}</div>
+          <div class="prest-card-contact">${esc(p.email)} ${p.telephone?'· '+esc(p.telephone):''}</div>
+          ${p.siret?`<div class="prest-card-contact">SIRET : ${esc(p.siret)}</div>`:''}
         </div>
         <span class="badge badge-${p.actif?'active':'inactive'}">${p.actif?'Actif':'Inactif'}</span>
       </div>
@@ -746,6 +756,7 @@ async function loadAgents() {
 
   const { data: agents } = await q;
   if (!agents?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>Aucun agent</p></div>'; return; }
+  allAgents = agents;
 
   const { data: assigs } = await sb.from('agent_logements').select('agent_id,logements(id,nom)');
   const assigMap = {};
@@ -754,28 +765,28 @@ async function loadAgents() {
   grid.innerHTML = '';
   agents.forEach(ag => {
     const lgs = assigMap[ag.id] || [];
-    const contact = ag.email ? `✉️ ${ag.email}` : ag.telephone ? `📱 ${ag.telephone}` : '—';
+    const contact = ag.email ? `✉️ ${esc(ag.email)}` : ag.telephone ? `📱 ${esc(ag.telephone)}` : '—';
     const card = document.createElement('div');
     card.className = 'agent-card';
     card.innerHTML = `
       <div class="agent-card-header">
         <div class="av av-lg">${initials(ag.nom)}</div>
         <div style="flex:1">
-          <div class="agent-card-name">${ag.nom}</div>
+          <div class="agent-card-name">${esc(ag.nom)}</div>
           <div class="agent-card-meta">${contact}</div>
-          ${ag.prestataire_nom?`<div class="agent-card-meta" style="color:var(--teal)">🏢 ${ag.prestataire_nom}</div>`:''}
+          ${ag.prestataire_nom?`<div class="agent-card-meta" style="color:var(--teal)">🏢 ${esc(ag.prestataire_nom)}</div>`:''}
         </div>
         <span class="badge badge-${ag.actif?'active':'inactive'}">${ag.actif?'Actif':'Inactif'}</span>
       </div>
       <div>
         <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Logements assignés</div>
-        <div class="agent-logements-list">${lgs.length?lgs.map(l=>`<span class="logement-chip">📍 ${l.nom}</span>`).join(''):'<span style="font-size:12px;color:var(--muted)">Aucun</span>'}</div>
+        <div class="agent-logements-list">${lgs.length?lgs.map(l=>`<span class="logement-chip">📍 ${esc(l.nom)}</span>`).join(''):'<span style="font-size:12px;color:var(--muted)">Aucun</span>'}</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <div style="font-size:11px;color:var(--muted)">📊 ${ag.prestations_ce_mois||0} prestation(s) ce mois</div>
       </div>
       <div class="agent-card-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openDrawerEditAgent('${ag.id}','${ag.nom}','${ag.email||''}','${ag.telephone||''}','${ag.prestataire_id||''}')">✏️ Modifier</button>
+        <button class="btn btn-ghost btn-sm" onclick="openDrawerEditAgent('${ag.id}')">✏️ Modifier</button>
         <button class="btn btn-danger" onclick="toggleActifAgent('${ag.id}',${ag.actif})">${ag.actif?'Désactiver':'Réactiver'}</button>
       </div>`;
     grid.appendChild(card);
@@ -816,12 +827,12 @@ function openDrawerEditPrestataire(id) {
   document.getElementById('drawer-submit').textContent = 'Enregistrer';
   document.getElementById('drawer-info').textContent = '';
   document.getElementById('drawer-body').innerHTML = `
-    <div class="field"><label>Nom de l'entreprise *</label><input type="text" id="d-pnom" value="${p.nom||''}"></div>
-    <div class="field"><label>Email</label><input type="email" id="d-pemail" value="${p.email||''}"></div>
-    <div class="field"><label>Téléphone</label><input type="tel" id="d-ptel" value="${p.telephone||''}"></div>
-    <div class="field"><label>Adresse</label><input type="text" id="d-padresse" value="${p.adresse||''}"></div>
-    <div class="field"><label>SIRET</label><input type="text" id="d-psiret" value="${p.siret||''}"></div>
-    <div class="field"><label>Notes</label><textarea id="d-pnotes">${p.notes||''}</textarea></div>`;
+    <div class="field"><label>Nom de l'entreprise *</label><input type="text" id="d-pnom" value="${esc(p.nom)}"></div>
+    <div class="field"><label>Email</label><input type="email" id="d-pemail" value="${esc(p.email)}"></div>
+    <div class="field"><label>Téléphone</label><input type="tel" id="d-ptel" value="${esc(p.telephone)}"></div>
+    <div class="field"><label>Adresse</label><input type="text" id="d-padresse" value="${esc(p.adresse)}"></div>
+    <div class="field"><label>SIRET</label><input type="text" id="d-psiret" value="${esc(p.siret)}"></div>
+    <div class="field"><label>Notes</label><textarea id="d-pnotes">${esc(p.notes)}</textarea></div>`;
   document.getElementById('drawer').classList.add('open');
 }
 
@@ -829,15 +840,15 @@ function openDrawerEditPrestataire(id) {
 // DRAWER — AGENT
 // ══════════════════════════════════════
 function buildAgentDrawerBody(nom='', email='', tel='', prestId='', isEdit=false) {
-  const prestOptions = allPrestataires.map(p => `<option value="${p.id}" ${p.id===prestId?'selected':''}>${p.nom}</option>`).join('');
+  const prestOptions = allPrestataires.map(p => `<option value="${p.id}" ${p.id===prestId?'selected':''}>${esc(p.nom)}</option>`).join('');
   const logementChecks = allLogements.map(l => `
     <div class="logement-check">
       <input type="checkbox" id="lc-${l.id}" value="${l.id}">
-      <label for="lc-${l.id}">${l.nom}</label>
+      <label for="lc-${l.id}">${esc(l.nom)}</label>
     </div>`).join('');
 
   return `
-    <div class="field"><label>Nom complet *</label><input type="text" id="d-anom" value="${nom}" placeholder="Marie Dupont"></div>
+    <div class="field"><label>Nom complet *</label><input type="text" id="d-anom" value="${esc(nom)}" placeholder="Marie Dupont"></div>
     <div class="field"><label>Prestataire *</label>
       <select id="d-aprest"><option value="">— Choisir un prestataire —</option>${prestOptions}</select>
     </div>
@@ -857,7 +868,7 @@ function buildAgentDrawerBody(nom='', email='', tel='', prestId='', isEdit=false
       <div class="field"><label>Email</label><input type="email" id="d-aemail" placeholder="marie@email.com"></div>
       <div class="hint-box-g">💡 Un lien de connexion sera envoyé par email.</div>
     </div>` : `
-    <div class="field"><label>Contact</label><input type="text" value="${email||tel}" disabled style="opacity:.5"></div>`}
+    <div class="field"><label>Contact</label><input type="text" value="${esc(email||tel)}" disabled style="opacity:.5"></div>`}
     <div class="drawer-section">Logements assignés</div>
     <div class="logement-check-list" id="logement-check-list">${logementChecks}</div>`;
 }
@@ -872,13 +883,15 @@ function openDrawerNewAgent() {
   document.getElementById('drawer').classList.add('open');
 }
 
-function openDrawerEditAgent(id, nom, email, tel, prestId) {
+function openDrawerEditAgent(id) {
+  const ag = allAgents.find(x => x.id === id);
+  if (!ag) return;
   drawerMode = 'edit-agent'; editingId = id;
   document.getElementById('drawer-title').textContent = 'Modifier l\'agent';
-  document.getElementById('drawer-sub').textContent = nom;
+  document.getElementById('drawer-sub').textContent = ag.nom; // textContent : pas de risque HTML
   document.getElementById('drawer-submit').textContent = 'Enregistrer';
   document.getElementById('drawer-info').textContent = '';
-  document.getElementById('drawer-body').innerHTML = buildAgentDrawerBody(nom, email, tel, prestId, true);
+  document.getElementById('drawer-body').innerHTML = buildAgentDrawerBody(ag.nom, ag.email, ag.telephone, ag.prestataire_id, true);
 
   // Charger les logements assignés
   sb.from('agent_logements').select('logement_id').eq('agent_id', id).then(({ data }) => {
