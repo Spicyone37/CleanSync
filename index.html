@@ -1462,9 +1462,13 @@ html{scroll-behavior:smooth} body{line-height:1.45}
 
       <!-- ---- CONFIGURATION ---- -->
       <div id="page-settings" class="page">
-        <div class="ph"><div><div class="ph-title">Configuration</div><div class="ph-sub">Modèles SMS · Proxy iCal · Compte</div></div></div>
+        <div class="ph"><div><div class="ph-title">Configuration</div><div class="ph-sub">Abonnement · Modèles SMS · Compte</div></div></div>
         <div class="card card-body">
           <div style="padding:20px">
+            <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">💳 Abonnement</div>
+            <div id="subscription-box" style="margin-bottom:20px"></div>
+
+            <div style="height:1px;background:var(--line);margin:20px 0"></div>
             <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">📱 Modèles SMS</div>
             <div class="ib ib-jade">
               <strong>Variables :</strong> {contact} {logement} {adresse} {code_acces} {voyageur} {date} {heure} {plateforme}
@@ -1596,28 +1600,29 @@ html{scroll-behavior:smooth} body{line-height:1.45}
 
 <!-- Upgrade -->
 <div class="overlay" id="ov-upgrade">
-  <div class="modal" style="max-width:480px;text-align:center">
+  <div class="modal" style="max-width:560px;text-align:center">
     <div style="font-size:40px;margin-bottom:10px">⭐</div>
-    <div class="modal-title">Passer Premium</div>
-    <p style="font-size:13px;color:var(--fog);margin-bottom:4px">Débloquez SMS automatiques et rapports mensuels</p>
+    <div class="modal-title">Passer au palier supérieur</div>
+    <p style="font-size:13px;color:var(--fog);margin-bottom:4px">Débloquez SMS automatiques J-1 et rapports mensuels</p>
     <div class="plan-grid">
       <div class="plan-card">
-        <div class="plan-name">Gratuit</div>
-        <div class="plan-price">0€ <sub>/mois</sub></div>
-        <div class="plan-feats">Logements illimités<br>Sociétés illimitées<br>Sync iCal<br>SMS manuel iPhone</div>
+        <div class="plan-name">Starter</div>
+        <div class="plan-feats">Jusqu'à 5 logements<br>Sync iCal<br>SMS manuel</div>
+        <button class="btn btn-g btn-sm" style="margin-top:10px" onclick="goToCheckout('starter')">Choisir</button>
       </div>
       <div class="plan-card featured">
-        <div class="plan-name">⭐ Premium</div>
-        <div class="plan-price">9€ <sub>/mois</sub></div>
-        <div class="plan-feats">Tout le gratuit<br>SMS automatique J-1<br>Rapports mensuels<br>Export CSV<br>Support prioritaire</div>
+        <div class="plan-name">⭐ Pro</div>
+        <div class="plan-feats">Jusqu'à 20 logements<br>Rapports mensuels<br>SMS automatique J-1<br>Export CSV</div>
+        <button class="btn btn-up btn-sm" style="margin-top:10px" onclick="goToCheckout('pro')">Choisir</button>
       </div>
-    </div>
-    <div class="ib ib-gold" style="text-align:left">
-      <strong>🔧 Intégration Stripe à venir</strong> — Pour activer Premium maintenant, contactez-nous directement.
+      <div class="plan-card">
+        <div class="plan-name">Business</div>
+        <div class="plan-feats">Logements illimités<br>Tout Pro inclus<br>Support prioritaire</div>
+        <button class="btn btn-g btn-sm" style="margin-top:10px" onclick="goToCheckout('business')">Choisir</button>
+      </div>
     </div>
     <div class="modal-foot" style="justify-content:center">
       <button class="btn btn-g" onclick="closeOverlay('ov-upgrade')">Plus tard</button>
-      <button class="btn btn-up btn-lg" onclick="startStripeCheckout()">💳 Passer Premium 9€/mois →</button>
     </div>
   </div>
 </div>
@@ -1636,8 +1641,6 @@ html{scroll-behavior:smooth} body{line-height:1.45}
 // ============================================================
 const SUPABASE_URL           = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co';
 const SUPABASE_ANON_KEY      = 'sb_publishable_OfteszLNcXEDesXqITBJ9w_c-yU8Las';
-const STRIPE_PUBLIC_KEY      = 'pk_test_51Iv767KNdoru5E88dFs7qDOMgOWlH7kbWPYJdIm3mESdEwK3qMbJtVjZPYcpxk7RRQONWQHC1j7KiYpwnCshsuOs009ioKkAYt';
-const SUPABASE_FUNCTIONS_URL = 'https://kwwfdhrlvbfdmkmxpwde.supabase.co/functions/v1';
 
 // ============================================================
 // DATA LAYER — abstraction Supabase / localStorage
@@ -1760,10 +1763,7 @@ window.doLogin = async function() {
     if (USE_SUPABASE) {
       const { data, error } = await supabase_client.auth.signInWithPassword({ email, password: pwd });
       if (error) throw Error(error.message);
-      user = { id: data.user.id, email: data.user.email, plan: 'free' };
-      // Fetch plan from profiles
-      const { data: prof } = await supabase_client.from('profiles').select('plan').eq('id', user.id).single();
-      if (prof) user.plan = prof.plan;
+      user = { id: data.user.id, email: data.user.email };
     } else {
       user = await localLogin(email, pwd);
     }
@@ -1832,13 +1832,13 @@ async function boot(user) {
   document.getElementById('user-avatar').textContent = initials;
   document.getElementById('user-email-display').textContent = user.email;
   const planEl = document.getElementById('user-plan-display');
-  planEl.textContent = user.plan === 'premium' ? '⭐ Premium' : '✨ Gratuit';
-  planEl.className   = 'user-plan ' + (user.plan === 'premium' ? 'premium' : 'free');
+  const planLabel = S.subscription ? (PLAN_LABELS[S.subscription.plan] || S.subscription.plan) : 'Aucun abonnement';
+  planEl.textContent = planLabel;
+  planEl.className   = 'user-plan ' + (hasProFeatures() ? 'premium' : 'free');
 
-  // Show/hide premium locks
-  const isPrem = user.plan === 'premium';
-  document.getElementById('nav-lock-rapports').style.display = isPrem ? 'none' : '';
-  document.getElementById('nav-lock-sms').style.display      = isPrem ? 'none' : '';
+  // Rapports + SMS automatique J-1 : débloqués à partir du palier Pro
+  document.getElementById('nav-lock-rapports').style.display = hasProFeatures() ? 'none' : '';
+  document.getElementById('nav-lock-sms').style.display      = hasProFeatures() ? 'none' : '';
 
   renderAll();
   toast(`Bonjour ${user.email.split('@')[0]} 👋`, 'success');
@@ -1851,18 +1851,24 @@ async function loadFromSupabase() {
   if (!USE_SUPABASE) return;
   const uid = S.user.id;
 
-  const [socR, logR, resR, smsR, setR] = await Promise.all([
+  const [socR, logR, resR, smsR, setR, subR] = await Promise.all([
     supabase_client.from('societes').select('*').eq('user_id', uid).order('created_at'),
     supabase_client.from('logements').select('*').eq('user_id', uid).order('created_at'),
     supabase_client.from('reservations').select('*').eq('user_id', uid).order('checkin'),
     supabase_client.from('sms_logs').select('*').eq('user_id', uid).order('sent_at', { ascending: false }),
-    supabase_client.from('settings').select('*').eq('user_id', uid).single()
+    supabase_client.from('settings').select('*').eq('user_id', uid).single(),
+    supabase_client.from('subscriptions').select('*').eq('user_id', uid).maybeSingle()
   ]);
 
   S.societes     = (socR.data || []).map(s => ({ id: s.id, nom: s.nom, contact: s.contact, tel: s.tel, tarif: s.tarif }));
   S.logements    = (logR.data || []).map(l => ({ id: l.id, nom: l.nom, adresse: l.adresse, code: l.code, societeId: l.societe_id, icalAirbnb: l.ical_airbnb, icalBooking: l.ical_booking, lastSync: l.last_sync, archived: l.archived || false }));
   S.reservations = (resR.data || []).map(r => ({ id: r.id, logIdx: r.logement_id, logId: r.logement_id, socIdx: r.societe_id, socId: r.societe_id, platform: r.platform, voyageur: r.voyageur, checkin: r.checkin, checkinH: r.checkin_h, checkout: r.checkout, checkoutH: r.checkout_h, statusIn: r.status_checkin, statusOut: r.status_checkout, uid: r.uid_ical, source: r.source }));
   S.smsList      = (smsR.data || []).map(s => ({ date: new Date(s.sent_at).toLocaleString('fr-FR'), societe: s.societe_nom || '—', logement: s.logement_nom || '—', type: s.type === 'checkin' ? 'Entrée' : 'Sortie', message: s.message || '' }));
+  S.subscription = subR?.data ? {
+    plan: subR.data.plan, status: subR.data.status,
+    logementLimit: subR.data.logement_limit,
+    currentPeriodEnd: subR.data.current_period_end
+  } : null;
 
   if (setR.data) {
     S.settings = { templateCheckin: setR.data.template_checkin || DEF_TPL.checkin, templateCheckout: setR.data.template_checkout || DEF_TPL.checkout };
@@ -1902,7 +1908,13 @@ function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-function isPrem() { return S.user?.plan === 'premium'; }
+function hasProFeatures() {
+  const s = S.subscription;
+  if (!s) return false;
+  const planOk   = s.plan === 'pro' || s.plan === 'business';
+  const statusOk = s.status === 'active' || s.status === 'trialing';
+  return planOk && statusOk;
+}
 function phone(p) { return /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/.test(String(p).replace(/\s/g,'')); }
 function save()   { if (!USE_SUPABASE) lsSave(); }
 
@@ -2067,6 +2079,16 @@ window.saveLog = async function() {
   const nom    = document.getElementById('l-nom').value.trim();
   const adresse = document.getElementById('l-adr').value.trim();
   if (!nom || !adresse) { toast('Nom et adresse requis', 'error'); return; }
+
+  // Contrôle de quota : uniquement à la création (pas en édition), et
+  // uniquement si une limite est définie (null = illimité, palier Business).
+  if (_editLogIdx < 0 && S.subscription?.logementLimit != null) {
+    const actifs = S.logements.filter(l => !l.archived).length;
+    if (actifs >= S.subscription.logementLimit) {
+      toast(`Limite de ${S.subscription.logementLimit} logements atteinte pour votre palier "${S.subscription.plan}". Passez à un palier supérieur pour en ajouter.`, 'error');
+      return;
+    }
+  }
 
   const socSel  = document.getElementById('l-soc').value;
   const obj = {
@@ -2491,14 +2513,14 @@ function renderSmsHist() {
 // ============================================================
 function renderRapports() {
   const el = document.getElementById('rapports-content');
-  if (!isPrem()) {
+  if (!hasProFeatures()) {
     document.getElementById('rapports-export-btn').style.display = 'none';
     el.innerHTML = `
       <div class="premium-lock">
         <div class="premium-lock-icon">📈</div>
         <div class="premium-lock-title">Rapports mensuels</div>
-        <div class="premium-lock-desc">Visualisez vos statistiques mois par mois :<br>nombre de séjours, nuits vendues, sociétés mobilisées, taux d'occupation par logement.</div>
-        <button class="btn btn-up btn-lg" onclick="openOverlay('ov-upgrade')">⭐ Passer Premium</button>
+        <div class="premium-lock-desc">Visualisez vos statistiques mois par mois :<br>nombre de séjours, nuits vendues, sociétés mobilisées, taux d'occupation par logement.<br><br>Inclus à partir du palier Pro.</div>
+        <button class="btn btn-up btn-lg" onclick="goToCheckout('pro')">⬆️ Passer au palier Pro</button>
       </div>`;
     return;
   }
@@ -2558,7 +2580,7 @@ window.exportCSV = function() {
 // ============================================================
 function renderSmsAuto() {
   const el = document.getElementById('sms-auto-content');
-  if (!isPrem()) {
+  if (!hasProFeatures()) {
     el.innerHTML = `
       <div class="premium-lock">
         <div class="premium-lock-icon">🤖</div>
@@ -2566,9 +2588,9 @@ function renderSmsAuto() {
         <div class="premium-lock-desc">
           CleanSync envoie automatiquement un SMS de rappel à votre société de ménage<br>
           la veille de chaque check-in et check-out, sans intervention de votre part.<br><br>
-          <em>Nécessite un serveur backend ou Supabase Edge Functions.</em>
+          Inclus à partir du palier Pro.
         </div>
-        <button class="btn btn-up btn-lg" onclick="openOverlay('ov-upgrade')">⭐ Passer Premium</button>
+        <button class="btn btn-up btn-lg" onclick="goToCheckout('pro')">⬆️ Passer au palier Pro</button>
       </div>`;
     return;
   }
@@ -2587,25 +2609,27 @@ function renderSmsAuto() {
 
   el.innerHTML = `
     <div class="ib ib-jade" style="margin-bottom:20px">
-      <strong>🤖 SMS automatiques activés</strong> — Les rappels J-1 seront envoyés via Supabase Edge Functions. Configurez votre webhook dans le dashboard Supabase.
+      <strong>🤖 SMS automatiques activés</strong> — Chaque jour, CleanSync envoie automatiquement le rappel J-1 aux sociétés de ménage pour les entrées/sorties du lendemain. Vous pouvez aussi déclencher un envoi manuel ci-dessous si besoin.
     </div>
     <div class="card">
       <div class="card-h"><div class="card-h-title">📅 Prochaines interventions (7 jours)</div></div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>Logement</th><th>Type</th><th>Date</th><th>Société</th><th>Rappel J-1</th></tr></thead>
+          <thead><tr><th>Logement</th><th>Type</th><th>Date</th><th>Société</th><th>Rappel J-1</th><th>Envoi manuel</th></tr></thead>
           <tbody>
             ${upcoming.length ? upcoming.map(u => {
               const log = getLog(u.r.logIdx)||getLog(u.r.logId);
               const soc = getSoc(u.r.socIdx)||getSoc(u.r.socId);
+              const already = u.type==='checkin' ? u.r.statusIn==='sent' : u.r.statusOut==='sent';
               return `<tr>
                 <td>${log ? esc(log.nom) : '?'}</td>
                 <td><span class="tag ${u.type==='checkin'?'tag-gold':'tag-jade'}">${u.type==='checkin'?'↓ Entrée':'↑ Sortie'}</span></td>
                 <td>${fmtD(u.date)}</td>
                 <td>${soc ? esc(soc.nom) : '<span style="color:var(--fog)">—</span>'}</td>
-                <td><span class="tag tag-jade">✅ Programmé</span></td>
+                <td>${already ? '<span class="tag tag-jade">✅ Envoyé</span>' : '<span class="tag" style="background:var(--gold-10);color:var(--gold)">⏳ Prévu ce soir</span>'}</td>
+                <td><button class="btn btn-j btn-sm" onclick="prepareSMS(${S.reservations.indexOf(u.r)},'${u.type}')">📤 Envoyer maintenant</button></td>
               </tr>`;
-            }).join('') : '<tr><td class="empty-td" colspan="5">Aucune intervention dans les 7 prochains jours</td></tr>'}
+            }).join('') : '<tr><td class="empty-td" colspan="6">Aucune intervention dans les 7 prochains jours</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -2615,9 +2639,78 @@ function renderSmsAuto() {
 // ============================================================
 // SETTINGS
 // ============================================================
+const PLAN_LABELS = { starter: 'Starter (5 logements)', pro: 'Pro (20 logements)', business: 'Business (illimité)' };
+const STATUS_LABELS = {
+  active: '✅ Actif', trialing: '🔵 Essai', past_due: '⚠️ Paiement en échec',
+  canceled: '⛔ Résilié', unpaid: '⚠️ Impayé', incomplete: '⏳ Non finalisé'
+};
+
+function renderSubscription() {
+  const box = document.getElementById('subscription-box');
+  if (!box) return;
+
+  if (!S.subscription) {
+    box.innerHTML = `
+      <div class="ib ib-jade" style="margin-bottom:16px">Aucun abonnement actif pour le moment.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="goToCheckout('starter')">Choisir Starter</button>
+        <button class="btn btn-primary btn-sm" onclick="goToCheckout('pro')">Choisir Pro</button>
+        <button class="btn btn-primary btn-sm" onclick="goToCheckout('business')">Choisir Business</button>
+      </div>`;
+    return;
+  }
+
+  const s = S.subscription;
+  const periodEnd = s.currentPeriodEnd ? new Date(s.currentPeriodEnd).toLocaleDateString('fr-FR') : '—';
+  box.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:15px;font-weight:600">${esc(PLAN_LABELS[s.plan] || s.plan)}</div>
+      <div style="font-size:13px;color:var(--muted)">${STATUS_LABELS[s.status] || esc(s.status)} · Renouvellement : ${periodEnd}</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-g btn-sm" onclick="goToPortal()">Gérer mon abonnement</button>
+      ${s.plan !== 'business' ? `<button class="btn btn-primary btn-sm" onclick="goToCheckout('${s.plan === 'starter' ? 'pro' : 'business'}')">⬆️ Changer de palier</button>` : ''}
+    </div>`;
+}
+
+window.goToCheckout = async function(plan) {
+  if (!USE_SUPABASE) { toast('Indisponible en mode hors-ligne', 'error'); return; }
+  toast('Redirection vers le paiement…', 'info');
+  try {
+    const { data: { session } } = await supabase_client.auth.getSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ plan }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+    window.location.href = result.url;
+  } catch (e) {
+    toast(`Erreur : ${e.message}`, 'error');
+  }
+};
+
+window.goToPortal = async function() {
+  if (!USE_SUPABASE) { toast('Indisponible en mode hors-ligne', 'error'); return; }
+  try {
+    const { data: { session } } = await supabase_client.auth.getSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-portal-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || `HTTP ${res.status}`);
+    window.location.href = result.url;
+  } catch (e) {
+    toast(`Erreur : ${e.message}`, 'error');
+  }
+};
+
 function renderSettings() {
   document.getElementById('tpl-in').value      = S.settings.templateCheckin  || DEF_TPL.checkin;
   document.getElementById('tpl-out').value     = S.settings.templateCheckout || DEF_TPL.checkout;
+  renderSubscription();
 }
 
 window.saveSettings = async function() {
@@ -2648,60 +2741,29 @@ window.saveSettings = async function() {
 };
 
 // ============================================================
-// STRIPE CHECKOUT
+// STRIPE — retour de Checkout
 // ============================================================
-window.startStripeCheckout = async function() {
-  if (!S.user) { toast('Connectez-vous d\'abord', 'error'); return; }
-
-  const btn = document.querySelector('#ov-upgrade .btn-up');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Redirection…'; }
-
-  try {
-    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/stripe-checkout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      },
-      body: JSON.stringify({
-        user_id: S.user.id,
-        user_email: S.user.email
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erreur Stripe');
-
-    window.location.href = data.url;
-
-  } catch(e) {
-    toast('Erreur : ' + e.message, 'error');
-    if (btn) { btn.disabled = false; btn.textContent = '💳 Passer Premium 9€/mois →'; }
-  }
-};
-
-// Détecter le retour depuis Stripe
 function checkStripeReturn() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('premium') === 'success') {
-    // Nettoyer l'URL
+  if (params.get('checkout') === 'success') {
     window.history.replaceState({}, '', window.location.pathname);
-    // Recharger le profil depuis Supabase
+    // Le webhook Stripe met à jour `subscriptions` de façon asynchrone ;
+    // on laisse un court délai puis on recharge depuis Supabase.
     setTimeout(async () => {
       if (S.user && USE_SUPABASE) {
-        const { data: prof } = await supabase_client.from('profiles').select('plan').eq('id', S.user.id).single();
-        if (prof?.plan === 'premium') {
-          S.user.plan = 'premium';
-          setSess(S.user);
-          document.getElementById('user-plan-display').textContent = '⭐ Premium';
-          document.getElementById('user-plan-display').className = 'user-plan premium';
-          document.getElementById('nav-lock-rapports').style.display = 'none';
-          document.getElementById('nav-lock-sms').style.display = 'none';
-          toast('🎉 Bienvenue en Premium ! SMS automatiques activés.', 'success');
+        await loadFromSupabase();
+        renderSubscription();
+        const planEl = document.getElementById('user-plan-display');
+        if (planEl && S.subscription) {
+          planEl.textContent = PLAN_LABELS[S.subscription.plan] || S.subscription.plan;
+          planEl.className = 'user-plan ' + (hasProFeatures() ? 'premium' : 'free');
         }
+        document.getElementById('nav-lock-rapports').style.display = hasProFeatures() ? 'none' : '';
+        document.getElementById('nav-lock-sms').style.display      = hasProFeatures() ? 'none' : '';
+        toast('🎉 Abonnement activé !', 'success');
       }
     }, 2000);
-  } else if (params.get('premium') === 'cancelled') {
+  } else if (params.get('checkout') === 'cancel') {
     window.history.replaceState({}, '', window.location.pathname);
     toast('Paiement annulé', 'info');
   }
@@ -2726,9 +2788,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check Supabase session
     const { data: { session } } = await supabase_client.auth.getSession();
     if (session?.user) {
-      const user = { id: session.user.id, email: session.user.email, plan: 'free' };
-      const { data: prof } = await supabase_client.from('profiles').select('plan').eq('id', user.id).single();
-      if (prof) user.plan = prof.plan;
+      const user = { id: session.user.id, email: session.user.email };
       await boot(user);
     }
   } else {

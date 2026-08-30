@@ -65,6 +65,7 @@ create table public.logements (
   ical_airbnb  text,
   ical_booking text,
   last_sync    timestamptz,
+  archived     boolean not null default false,
   created_at   timestamptz default now()
 );
 
@@ -74,7 +75,7 @@ create table public.logements (
 create table public.reservations (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid references auth.users(id) on delete cascade not null,
-  logement_id     uuid references public.logements(id) on delete cascade,
+  logement_id     uuid references public.logements(id) on delete set null,
   societe_id      uuid references public.societes(id) on delete set null,
   platform        text,
   voyageur        text,

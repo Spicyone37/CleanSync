@@ -1,17 +1,15 @@
-// supabase/functions/send-sms/index.ts
+// supabase/functions/sync-ical/index.ts
 //
-// Envoie un vrai SMS automatisé via Twilio (remplace l'ouverture
-// manuelle de l'app Messages). Le message est reconstruit ici,
-// côté serveur, à partir des données de la réservation — le client
-// ne fait que demander "envoie le SMS d'entrée pour cette réservation",
-// il ne peut pas dicter le numéro de destination ni le contenu.
+// Remplace le proxy public "api.allorigins.win" : le fetch du fichier
+// .ics se fait ici, côté serveur, donc pas de problème CORS et
+// aucune URL de calendrier ne transite plus par un service tiers.
 //
-// Variables d'environnement à configurer AVANT déploiement :
-//   supabase secrets set TWILIO_ACCOUNT_SID=xxxx
-//   supabase secrets set TWILIO_AUTH_TOKEN=xxxx
-//   supabase secrets set TWILIO_FROM_NUMBER=+33xxxxxxxxx
+// Sécurité : le client Supabase est créé avec le JWT de l'utilisateur
+// appelant (pas la clé service_role), donc le Row Level Security de
+// Postgres continue de s'appliquer normalement — impossible de
+// synchroniser le logement d'un autre utilisateur.
 //
-// Déploiement : `supabase functions deploy send-sms`
+// Déploiement : `supabase functions deploy sync-ical`
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -20,39 +18,31 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const DEF_TPL = {
-  checkin: "Bonjour {contact}, une entrée est prévue au {logement} le {date} à {heure}. Voyageur : {voyageur} ({plateforme}). Code d'accès : {code_acces}. Adresse : {adresse}. Merci !",
-  checkout: "Bonjour {contact}, un ménage est à prévoir au {logement} suite au départ du {date} à {heure} ({plateforme}). Merci !",
-};
-
-function fmtDateFR(iso: string) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+function parseIcal(text: string) {
+  const evts: { uid: string | null; summary: string; start: string; end: string }[] = [];
+  const re = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const blk = m[1];
+    const get = (k: string) => {
+      const r = new RegExp(k + '[^:]*:([^\r\n]+)').exec(blk);
+      return r ? r[1].trim() : null;
+    };
+    const ds = get('DTSTART'), de = get('DTEND');
+    if (ds && de) {
+      evts.push({
+        uid: get('UID'),
+        summary: (get('SUMMARY') || '').replace(/\\n/g, ' ').replace(/\\,/g, ','),
+        start: icalISO(ds),
+        end: icalISO(de),
+      });
+    }
+  }
+  return evts;
 }
-
-function buildMessage(tmpl: string, ctx: {
-  logement?: string; adresse?: string; code?: string; voyageur?: string;
-  date?: string; heure?: string; plateforme?: string; contact?: string;
-}) {
-  return (tmpl || '')
-    .replace(/{logement}/g, ctx.logement || '')
-    .replace(/{adresse}/g, ctx.adresse || '')
-    .replace(/{code_acces}/g, ctx.code || 'À confirmer')
-    .replace(/{voyageur}/g, ctx.voyageur || 'N/A')
-    .replace(/{date}/g, fmtDateFR(ctx.date || ''))
-    .replace(/{heure}/g, ctx.heure || '')
-    .replace(/{plateforme}/g, ctx.plateforme || '')
-    .replace(/{contact}/g, ctx.contact || '');
-}
-
-// Conversion basique numéro français local -> E.164.
-// Adapter cette fonction si l'activité s'étend hors de France.
-function toE164(tel: string): string {
-  const cleaned = (tel || '').replace(/[\s.\-()]/g, '');
-  if (cleaned.startsWith('+')) return cleaned;
-  if (cleaned.startsWith('0') && cleaned.length === 10) return '+33' + cleaned.slice(1);
-  return cleaned;
+function icalISO(d: string) {
+  const c = d.replace(/[TZ\s]/g, '');
+  return `${c.slice(0, 4)}-${c.slice(4, 6)}-${c.slice(6, 8)}`;
 }
 
 Deno.serve(async (req) => {
@@ -75,93 +65,75 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Session invalide' }), { status: 401, headers: CORS_HEADERS });
     }
 
-    const { reservation_id, type } = await req.json();
-    if (!reservation_id || !['checkin', 'checkout'].includes(type)) {
-      return new Response(JSON.stringify({ error: 'reservation_id ou type invalide' }), { status: 400, headers: CORS_HEADERS });
+    const { logement_id } = await req.json();
+    if (!logement_id) {
+      return new Response(JSON.stringify({ error: 'logement_id manquant' }), { status: 400, headers: CORS_HEADERS });
     }
 
-    // RLS garantit que ces lectures ne renvoient des lignes QUE si
-    // elles appartiennent à l'utilisateur authentifié.
-    const { data: resa, error: resaErr } = await supabase
-      .from('reservations')
-      .select('id, logement_id, societe_id, checkin, checkout, checkin_h, checkout_h, voyageur, platform')
-      .eq('id', reservation_id)
-      .single();
-    if (resaErr || !resa) {
-      return new Response(JSON.stringify({ error: 'Réservation introuvable ou non autorisée' }), { status: 404, headers: CORS_HEADERS });
-    }
-
-    const { data: societe } = await supabase
-      .from('societes')
-      .select('nom, contact, tel')
-      .eq('id', resa.societe_id)
-      .single();
-    if (!societe?.tel) {
-      return new Response(JSON.stringify({ error: 'Aucun numéro de téléphone pour cette société' }), { status: 400, headers: CORS_HEADERS });
-    }
-
-    const { data: logement } = await supabase
+    // RLS garantit que ce select ne renvoie le logement QUE s'il
+    // appartient à l'utilisateur authentifié.
+    const { data: logement, error: logErr } = await supabase
       .from('logements')
-      .select('nom, adresse, code')
-      .eq('id', resa.logement_id)
+      .select('id, societe_id, ical_airbnb, ical_booking')
+      .eq('id', logement_id)
       .single();
 
-    const { data: settings } = await supabase
-      .from('settings')
-      .select('template_checkin, template_checkout')
-      .eq('user_id', user.id)
-      .single();
-
-    const tmpl = type === 'checkin'
-      ? (settings?.template_checkin || DEF_TPL.checkin)
-      : (settings?.template_checkout || DEF_TPL.checkout);
-
-    const message = buildMessage(tmpl, {
-      logement: logement?.nom,
-      adresse: logement?.adresse,
-      code: logement?.code,
-      voyageur: resa.voyageur,
-      date: type === 'checkin' ? resa.checkin : resa.checkout,
-      heure: type === 'checkin' ? resa.checkin_h : resa.checkout_h,
-      plateforme: resa.platform,
-      contact: societe.contact,
-    });
-
-    const to = toE164(societe.tel);
-    const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID')!;
-    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN')!;
-    const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER')!;
-
-    const twilioRes = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ To: to, From: fromNumber, Body: message }),
-      }
-    );
-    const twilioData = await twilioRes.json();
-
-    if (!twilioRes.ok) {
-      return new Response(JSON.stringify({ error: `Twilio: ${twilioData.message || twilioRes.status}` }), { status: 502, headers: CORS_HEADERS });
+    if (logErr || !logement) {
+      return new Response(JSON.stringify({ error: 'Logement introuvable ou non autorisé' }), { status: 404, headers: CORS_HEADERS });
     }
 
-    // Journalisation + mise à jour du statut, toujours scopées à l'utilisateur
-    await supabase.from('sms_logs').insert({
-      user_id: user.id,
-      societe_nom: societe.nom,
-      logement_nom: logement?.nom || '—',
-      type,
-      message,
-    });
-    await supabase.from('reservations').update(
-      type === 'checkin' ? { status_checkin: 'sent' } : { status_checkout: 'sent' }
-    ).eq('id', resa.id);
+    let imported = 0;
+    const errors: string[] = [];
 
-    return new Response(JSON.stringify({ success: true, sid: twilioData.sid, message }), {
+    const platforms: [string | null, string][] = [
+      [logement.ical_airbnb, 'Airbnb'],
+      [logement.ical_booking, 'Booking'],
+    ];
+
+    for (const [url, plat] of platforms) {
+      if (!url) continue;
+      try {
+        const ctl = new AbortController();
+        const tid = setTimeout(() => ctl.abort(), 15000);
+        const res = await fetch(url, { signal: ctl.signal });
+        clearTimeout(tid);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const events = parseIcal(await res.text());
+        for (const ev of events) {
+          if (!ev.start || !ev.end) continue;
+
+          const { data: existing } = await supabase
+            .from('reservations')
+            .select('id')
+            .eq('uid_ical', ev.uid)
+            .maybeSingle();
+          if (existing) continue;
+
+          const { error: insErr } = await supabase.from('reservations').insert({
+            user_id: user.id,
+            logement_id: logement.id,
+            societe_id: logement.societe_id || null,
+            platform: plat,
+            voyageur: ev.summary || `Réservation ${plat}`,
+            checkin: ev.start,
+            checkout: ev.end,
+            checkin_h: '15:00',
+            checkout_h: '11:00',
+            uid_ical: ev.uid,
+            source: 'ical',
+          });
+          if (insErr) throw insErr;
+          imported++;
+        }
+      } catch (e) {
+        errors.push(`${plat}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+
+    await supabase.from('logements').update({ last_sync: new Date().toISOString() }).eq('id', logement.id);
+
+    return new Response(JSON.stringify({ imported, errors }), {
       status: 200,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
